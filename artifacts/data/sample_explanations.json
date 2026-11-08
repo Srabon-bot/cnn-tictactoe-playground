@@ -1,0 +1,18 @@
+{
+  "models": {
+    "underfit": "The Beginner AI is the underfit model. It had only two pattern detectors and three passes over the training data, so it is like a student who skimmed the book for five minutes. It found an optimal move on just 56% of boards it had never seen, and when a winning move was available it missed it 62% of the time. It still won 50% of its games against a random player, but that says more about random play than about understanding.",
+    "overfit": "The Memorizer AI practiced on only 60 boards, over and over, and it learned those boards almost perfectly: 100% correct on its practice set. On boards it had never seen it managed only 75%, a gap of 25% points. It is like a student who memorized last year's exam answers: perfect on the exact questions, helpless when the wording changes. Memorizing is not the same as understanding.",
+    "stable": "The Master AI learned the patterns behind the game, such as 'three in a row wins' and 'block the opponent', instead of memorizing individual boards. It chose an optimal move on 96% of unseen boards. Across 1,000 games against a random player it won 92% and lost 43 of the evaluated games; against perfect play it drew 173 of 200 games. A perfect player can still beat it occasionally, which is exactly the small weakness this teaching level is meant to show."
+  },
+  "concepts": {
+    "cnn": "A CNN is a model that looks for small local patterns and combines them. On a 3x3 board a pattern might be 'two of my marks in a row with the third cell empty'.",
+    "filter": "A filter is one tiny pattern detector that slides across the board and scores how strongly its pattern appears. The model learns the numbers inside its filters.",
+    "loss": "Loss measures how far the predicted probabilities are from the ideal answer. Training tries to make this number smaller; lower is better.",
+    "underfitting": "Underfitting means the model learned too little. It is weak on practice boards and on new boards, like a student who barely opened the book.",
+    "overfitting": "Overfitting means the model memorized its practice examples. It looks excellent on them but fails on new boards, like a student who memorized last year's answers.",
+    "regularization": "Regularization limits how much the model can rely on fragile details. Dropout is one example: it randomly switches off units during training so no single path becomes essential.",
+    "augmentation": "Augmentation creates extra training examples from the ones we have. Here every board is rotated and mirrored into its eight symmetric versions, so rules are seen from every angle.",
+    "early_stopping": "Early stopping watches validation loss and keeps the best weights. It stops training when the model begins to improve on practice data while getting worse on new data.",
+    "generalization": "Generalization is accuracy on boards that were not used for training. It is the only result that matters in a real game, because every game keeps producing new boards."
+  }
+}

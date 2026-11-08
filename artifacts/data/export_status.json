@@ -1,0 +1,7 @@
+{
+  "tensorflowjs_ok": {
+    "underfit": false,
+    "overfit": false,
+    "stable": false
+  }
+}

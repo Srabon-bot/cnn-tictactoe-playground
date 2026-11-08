@@ -21,8 +21,30 @@ language, what the AI did and why.
 ## Status
 
 - [x] Repository created
-- [ ] **Part A** — Colab notebook, three trained models, plots, exported artifacts (in progress)
-- [ ] **Part B** — Next.js website that plays against the models in the browser
+- [x] **Part A** — Colab notebook, three trained models, plots, exported artifacts (Completed & Verified)
+- [ ] **Part B** — Next.js website that plays against the models in the browser (Awaiting team go-ahead)
+
+## Results Summary (Part A)
+
+All metrics generated deterministically from seed `42` across 4,520 reachable non-terminal positions (grouped into 627 canonical forms; 70% train / 15% val / 15% test).
+
+| Model | Parameters | Train Accuracy | Validation Accuracy | Test Accuracy | Train-Val Gap | Illegal Move Rate | Gameplay Missed Win | Gameplay Missed Block |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| `underfit` | 191 | 55.1% | 56.0% | 55.6% | -0.9% | 47.8% | 62.5% | 88.1% |
+| `overfit` | 687,625 | 100.0% | 73.8% | 74.6% | **+26.2%** | 20.8% | 33.7% | 67.2% |
+| `stable` | 93,833 | 100.0% | 98.4% | **95.9%** | +1.6% | **0.0%** | 16.2% | 10.0% |
+
+### Gameplay Evaluation (1,200 games per model)
+
+- **Underfit**: 500W / 109D / 591L overall. Weak, makes 47.8% illegal attempts before masking, and misses 62.5% of winning moves.
+- **Overfit**: 707W / 156D / 337L overall. High win rate on seen patterns, but drops accuracy sharply on unseen test boards (+26.2% generalization gap).
+- **Stable**: 924W / 233D / 43L overall. 92.4% wins against random play, 0% illegal moves, and 86.5% draws against optimal minimax.
+
+### Acceptance and Reproducibility
+
+- **Runtime**: ~2.0 minutes end-to-end (well within the 10-minute Colab budget).
+- **Reproducibility**: Verified across two full back-to-back runs (`tools/verify_acceptance.py --compare reports/run1_metrics.json`); metrics match identically (tolerance `1e-9`).
+- **Artifacts**: Native `.keras` models, portable `weights.json` browser fallbacks, 7 figures (`.png`), 7 datasets (`.json`), and downloadable `artifacts.zip` (11.3 MB).
 
 ## Repository layout
 
