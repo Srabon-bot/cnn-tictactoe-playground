@@ -73,7 +73,7 @@ main {
   display: grid;
   grid-template-columns: repeat(3, 5px);
   grid-template-rows: repeat(3, 5px);
-  gap: 2px;
+  gap: var(--space-3xs);
   flex: none;
 }
 
@@ -162,12 +162,11 @@ main {
   right: 0;
   top: calc(100% + var(--space-xs));
   z-index: var(--z-dropdown);
-  width: min(18rem, calc(100vw - 2 * var(--gutter)));
+  width: min(18rem, calc(100dvw - 2 * var(--gutter)));
   padding: var(--space-sm);
   border: var(--rule-hair) solid var(--color-rule);
   border-radius: var(--radius-card);
   background: var(--color-paper);
-  box-shadow: var(--shadow-panel);
 }
 
 .mobile-menu-panel a {
@@ -294,7 +293,7 @@ main {
   background: var(--color-accent);
   color: var(--color-accent-ink);
   box-shadow:
-    inset 0 1px 0 oklch(100% 0 0 / 0.24),
+    inset 0 1px 0 color-mix(in oklab, var(--color-paper) 24%, transparent),
     var(--shadow-part);
 }
 
@@ -589,6 +588,7 @@ main {
   padding: 0;
   list-style: none;
   border-top: var(--rule-hair) solid var(--color-rule);
+  counter-reset: procedure-step;
 }
 
 .procedure-steps li {
@@ -597,9 +597,11 @@ main {
   gap: var(--space-md);
   padding-block: var(--space-lg);
   border-bottom: var(--rule-hair) solid var(--color-rule);
+  counter-increment: procedure-step;
 }
 
-.step-index {
+.procedure-steps li::before {
+  content: counter(procedure-step, decimal-leading-zero);
   font-family: var(--font-display);
   font-size: var(--text-lg);
   font-variant-numeric: tabular-nums;
@@ -697,7 +699,7 @@ main {
 
 .footer-brand p {
   margin-top: var(--space-sm);
-  max-width: 34ch;
+  max-width: 46ch;
   color: var(--color-muted);
   font-size: var(--text-sm);
 }
@@ -712,7 +714,7 @@ main {
 
 .footer-link {
   display: block;
-  padding-block: 3px;
+  padding-block: var(--space-2xs);
   color: var(--color-muted);
   font-size: var(--text-sm);
   text-decoration: none;
@@ -802,8 +804,8 @@ main {
 .board {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 6px;
-  padding: 6px;
+  gap: var(--space-2xs);
+  padding: var(--space-2xs);
   border-radius: var(--radius-card);
   background: var(--color-paper-3);
   box-shadow: inset 0 2px 8px var(--color-shadow);
@@ -855,7 +857,7 @@ main {
   bottom: 8px;
   width: 18px;
   height: 2px;
-  margin-left: -9px;
+  transform: translateX(-50%);
   background: var(--color-accent);
 }
 
@@ -1034,8 +1036,8 @@ main {
 .heat {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 4px;
-  padding: 4px;
+  gap: var(--space-2xs);
+  padding: var(--space-2xs);
   border-radius: var(--radius-part);
   background: var(--color-paper-3);
   box-shadow: inset 0 1px 3px var(--color-shadow);
@@ -1087,17 +1089,26 @@ main {
   border-bottom: var(--rule-hair) solid var(--color-rule);
 }
 
-.timeline-summary {
+.timeline-row {
   display: grid;
-  grid-template-columns: 4rem minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   gap: var(--space-md);
   align-items: center;
-  width: 100%;
   padding-block: var(--space-sm);
+}
+
+button.timeline-summary {
+  display: grid;
+  grid-template-columns: 4rem minmax(0, 1fr);
+  gap: var(--space-md);
+  align-items: center;
+  min-width: 0;
+  padding: 0;
   border: 0;
   background: transparent;
   color: var(--color-ink);
   text-align: left;
+  white-space: nowrap;
   cursor: pointer;
 }
 
@@ -1150,7 +1161,6 @@ main {
 .report-sheet {
   max-height: 90dvh;
   overflow: auto;
-  border: var(--rule-hair) solid var(--color-rule);
   border-radius: var(--radius-card);
   background: var(--color-paper);
   box-shadow: var(--shadow-panel);
@@ -1280,6 +1290,7 @@ main {
   font-family: var(--font-display);
   font-size: var(--text-xl);
   font-weight: 500;
+  font-variant-numeric: tabular-nums;
   letter-spacing: -0.025em;
 }
 
@@ -1393,7 +1404,7 @@ main {
 
 .learn-index a {
   display: block;
-  padding-block: 4px;
+  padding-block: var(--space-2xs);
   color: var(--color-muted);
   font-size: var(--text-sm);
   text-decoration: none;
@@ -1447,8 +1458,8 @@ main {
 .kernel-diagram {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 3px;
-  padding: 6px;
+  gap: var(--space-2xs);
+  padding: var(--space-2xs);
   border-radius: var(--radius-part);
   background: var(--color-paper-3);
 }
@@ -1515,7 +1526,7 @@ main {
 
 .status {
   display: inline-block;
-  padding: 2px var(--space-xs);
+  padding: var(--space-3xs) var(--space-xs);
   border: var(--rule-hair) solid currentColor;
   border-radius: var(--radius-pill);
   font-size: var(--text-xs);
@@ -1810,12 +1821,18 @@ main {
     grid-template-columns: minmax(0, 1fr);
   }
 
-  .timeline-summary {
+  button.timeline-summary {
     grid-template-columns: 3.5rem minmax(0, 1fr);
+    white-space: normal;
+  }
+
+  .timeline-row {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-2xs);
   }
 
   .timeline-flags {
-    grid-column: 2 / -1;
+    grid-column: 1 / -1;
   }
 
   .timeline-detail {

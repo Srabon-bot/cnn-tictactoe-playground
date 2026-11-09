@@ -13,7 +13,6 @@ export default function LearnPage() {
     <main>
       <div className="container">
         <div className="page-head">
-          <p className="label">Learn</p>
           <h1 className="display">The ideas behind the board</h1>
           <p className="lead">
             Six short explanations, each tied to something the models actually did. No maths
@@ -92,10 +91,10 @@ export default function LearnPage() {
                 misses immediate wins, and loses games a careful player would draw.
               </p>
               <p>
-                On the honest top-choice measure — the cell it ranks first must be empty and
-                optimal — it scores around a fifth of boards. On the post-mask measure, where
-                the engine discards occupied cells first, it looks much better than it is.
-                Both numbers are published side by side.
+                On the honest top-choice measure, where the cell it ranks first must be empty
+                and optimal, it scores around a fifth of boards. On the post-mask measure, where
+                the engine discards occupied cells first, it looks much better than it is. Both
+                numbers are published side by side.
               </p>
               <p className="analogy">
                 A student who skimmed the chapter and hopes the questions are familiar.
@@ -106,7 +105,7 @@ export default function LearnPage() {
               <h2>Overfitting: the Memorizer</h2>
               <p>
                 The Memorizer has room to spare but only sixty practice boards. It learns those
-                boards perfectly — every one, every time — and then meets validation boards it
+                boards perfectly, every one, every time, and then meets validation boards it
                 has never seen. Its train score is 100%; its validation score is around half
                 that. Move one mark and the confidence collapses.
               </p>

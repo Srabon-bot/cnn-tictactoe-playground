@@ -12,6 +12,12 @@ interface MoveTimelineProps {
 function cellName(index: number): string {
   const row = Math.floor(index / 3) + 1;
   const column = (index % 3) + 1;
+  return `r${row}c${column}`;
+}
+
+function cellWords(index: number): string {
+  const row = Math.floor(index / 3) + 1;
+  const column = (index % 3) + 1;
   return `row ${row}, column ${column}`;
 }
 
@@ -35,20 +41,23 @@ export function MoveTimeline({ moves, modelLevel }: MoveTimelineProps) {
 
         return (
           <li className="timeline-item" key={index}>
-            <button
-              type="button"
-              className="timeline-summary"
-              aria-expanded={open}
-              onClick={() => setOpenIndex(open ? null : index)}
-            >
-              <span className="timeline-move">Move {index + 1}</span>
-              <span className="timeline-title">
-                Cell {move.move + 1}
-                <span className="muted" style={{ fontWeight: 400 }}>
-                  {' '}
-                  · {cellName(move.move)}
+            <div className="timeline-row">
+              <button
+                type="button"
+                className="timeline-summary"
+                aria-expanded={open}
+                aria-label={`Move ${index + 1}, cell ${move.move + 1}, ${cellWords(move.move)}`}
+                onClick={() => setOpenIndex(open ? null : index)}
+              >
+                <span className="timeline-move">Move {index + 1}</span>
+                <span className="timeline-title">
+                  Cell {move.move + 1}
+                  <span className="muted" style={{ fontWeight: 400 }}>
+                    {' '}
+                    · {cellName(move.move)}
+                  </span>
                 </span>
-              </span>
+              </button>
               <span className="timeline-flags">
                 {move.isMissedWin ? <span>Missed win</span> : null}
                 {move.isMissedBlock ? <span>Missed block</span> : null}
@@ -58,7 +67,7 @@ export function MoveTimeline({ moves, modelLevel }: MoveTimelineProps) {
                   <span>{move.isMemorizedBoard ? 'Practice board' : 'New board'}</span>
                 ) : null}
               </span>
-            </button>
+            </div>
 
             {open ? (
               <div className="timeline-detail">

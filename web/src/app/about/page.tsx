@@ -23,11 +23,10 @@ export default function AboutPage() {
     <main>
       <div className="container">
         <div className="page-head">
-          <p className="label">About</p>
           <h1 className="display">A teaching project, not a product</h1>
           <p className="lead">
             TicTacLearn exists so that a visitor can feel the difference between a model that
-            underfits, one that memorises, and one that generalises — in about two minutes of
+            underfits, one that memorises, and one that generalises, in about two minutes of
             play.
           </p>
         </div>
@@ -46,7 +45,6 @@ export default function AboutPage() {
             </div>
             <ol className="procedure-steps">
               <li>
-                <span className="step-index">01</span>
                 <div>
                   <h3>The notebook is the source of truth</h3>
                   <p>
@@ -56,7 +54,6 @@ export default function AboutPage() {
                 </div>
               </li>
               <li>
-                <span className="step-index">02</span>
                 <div>
                   <h3>The browser runs the same forward pass</h3>
                   <p>
@@ -67,7 +64,6 @@ export default function AboutPage() {
                 </div>
               </li>
               <li>
-                <span className="step-index">03</span>
                 <div>
                   <h3>The fallback is stated, not hidden</h3>
                   <p>

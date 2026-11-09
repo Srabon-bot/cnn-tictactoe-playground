@@ -93,7 +93,6 @@ export default function ComparePage() {
     <main>
       <div className="container">
         <div className="page-head">
-          <p className="label">Compare</p>
           <h1 className="display">The same game, three ways</h1>
           <p className="lead">
             All three networks learned the same task from the same data, with different amounts

@@ -9,15 +9,13 @@ export default function HomePage() {
         <div className="hero-shade" aria-hidden="true" />
         <div className="container hero-inner">
           <div className="hero-copy">
-            <p className="label" style={{ color: "var(--color-band-ink)", opacity: 0.7 }}>
-              Three convolutional networks · one board
-            </p>
             <h1 id="hero-title" className="display">
               Three minds, one board.
             </h1>
             <p className="lead">
-              Play tic-tac-toe against a network that underfit, one that memorised sixty boards,
-              and one that learned the game. Open any move and see the nine scores behind it.
+              Play tic-tac-toe against three convolutional networks: one that underfit, one that
+              memorised sixty boards, and one that learned the game. Open any move and see the
+              nine scores behind it.
             </p>
             <div className="hero-actions">
               <Link href="/play" className="btn btn--primary">
@@ -59,14 +57,12 @@ export default function HomePage() {
             </div>
             <ol className="procedure-steps">
               <li>
-                <span className="step-index">01</span>
                 <div>
                   <h3>You move first as X</h3>
                   <p>Or take O and watch the network open. X always starts.</p>
                 </div>
               </li>
               <li>
-                <span className="step-index">02</span>
                 <div>
                   <h3>The network scores all nine cells</h3>
                   <p>
@@ -76,7 +72,6 @@ export default function HomePage() {
                 </div>
               </li>
               <li>
-                <span className="step-index">03</span>
                 <div>
                   <h3>The report names what it missed</h3>
                   <p>

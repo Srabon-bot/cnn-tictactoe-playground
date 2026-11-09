@@ -92,7 +92,6 @@ export default function TeacherPage() {
       <div className="container">
         <div className="page-head page-head-row">
           <div>
-            <p className="label">Teacher</p>
             <h1 className="display">The course behind the game</h1>
             <p className="lead">
               A map from the syllabus to the evidence, followed by the acceptance report the

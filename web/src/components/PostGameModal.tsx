@@ -123,10 +123,10 @@ export function PostGameModal({
       <div className="report-sheet">
         <div className="report-top">
           <div>
+            <h2 id="report-title">{OUTCOME_TITLE[outcome]}</h2>
             <p className="label">
               Match report · {levelInfo.name} · {outcome === 'win' ? 'you took the game' : 'board complete'}
             </p>
-            <h2 id="report-title">{OUTCOME_TITLE[outcome]}</h2>
           </div>
           <button type="button" className="report-close" onClick={onClose} aria-label="Close report">
             ✕
