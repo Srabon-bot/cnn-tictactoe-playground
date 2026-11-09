@@ -1,4 +1,4 @@
-import { Board, CellValue, Player } from './types';
+import { Board, Player } from './types';
 
 export const WINNING_LINES: readonly [number, number, number][] = [
   [0, 1, 2], [3, 4, 5], [6, 7, 8], // Rows
@@ -68,6 +68,35 @@ export function toMoverPerspective(board: Board, player: Player): number[][][] {
     tensor.push(row);
   }
   return tensor;
+}
+
+const scoreCache = new Map<string, number>();
+
+/** Minimax value for the player to move: +1 win, 0 draw, -1 loss. */
+function minimaxScore(board: Board, player: Player): number {
+  const winner = checkWinner(board);
+  if (winner !== null) return winner === player ? 1 : -1;
+  if (isBoardFull(board)) return 0;
+
+  const key = `${board.join('')}:${player}`;
+  const cached = scoreCache.get(key);
+  if (cached !== undefined) return cached;
+
+  let best = -Infinity;
+  for (const move of getLegalMoves(board)) {
+    const value = -minimaxScore(playMove(board, move, player), player === 1 ? -1 : 1);
+    if (value > best) best = value;
+  }
+  scoreCache.set(key, best);
+  return best;
+}
+
+/** Every move that preserves the best achievable result for the player to move. */
+export function bestMoves(board: Board, player: Player): number[] {
+  const best = minimaxScore(board, player);
+  return getLegalMoves(board).filter(
+    move => -minimaxScore(playMove(board, move, player), player === 1 ? -1 : 1) === best
+  );
 }
 
 export function maskProbabilities(board: Board, probabilities: number[]): number[] {

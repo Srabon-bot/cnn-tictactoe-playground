@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import * as fs from 'fs';
 import * as path from 'path';
-import { checkWinner, getLegalMoves, isTerminal, playMove, toMoverPerspective } from './rules';
+import { checkWinner, isTerminal, toMoverPerspective } from './rules';
 import { NeuralNetworkModel } from './inference';
 import { Board, ModelLevel, ParitySample } from './types';
 
@@ -38,7 +38,8 @@ describe('Game Rules', () => {
 });
 
 describe('Numerical Parity Test (JavaScript vs Python Ground Truth)', () => {
-  const artifactsDir = path.resolve(__dirname, '../../../public/artifacts');
+  // Vitest runs from the web/ package, so resolve artifacts from the working directory.
+  const artifactsDir = path.resolve(process.cwd(), 'public/artifacts');
   const parityPath = path.join(artifactsDir, 'data/parity_test_vectors.json');
   const parityData: Record<ModelLevel, ParitySample[]> = JSON.parse(
     fs.readFileSync(parityPath, 'utf-8')

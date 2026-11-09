@@ -1,36 +1,57 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# TicTacLearn - website
 
-## Getting Started
+The Part B site. It is a static Next.js application with no backend, no accounts and no stored
+scores. Every model move is computed in the browser from the exported weights.
 
-First, run the development server:
+## Run locally
 
-```bash
+```powershell
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open `http://localhost:3000`. The Play page needs the artifact files in `public/artifacts/`; they
+are committed with the project and refreshed after a notebook run.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Checks
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```powershell
+npm run test    # parity, rules and move-analysis tests
+npm run lint
+npm run build
+```
 
-## Learn More
+## Artifacts
 
-To learn more about Next.js, take a look at the following resources:
+`public/artifacts/` mirrors the notebook's `artifacts/` output:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- `data/` - metrics, histories, gameplay records, parity vectors and `acceptance.json`
+- `models/<level>/weights.json` - portable forward-pass weights
+- `plots/` - the figures drawn in the notebook
+- `artifacts.zip` - the full downloadable archive
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+The site never invents a number. The Compare and Teacher pages read these JSON files at runtime,
+so a new notebook run updates the site after the files are copied.
 
-## Deploy on Vercel
+## Inference
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+`src/lib/engine/inference.ts` is a hand-written implementation of the exported CNN. The notebook
+tries TensorFlow.js conversion first; the installed converter cannot read the current Keras format,
+so the notebook writes `weights.json` and records the fallback in `export_status.json`. The About
+page explains this openly. `src/lib/engine/engine.test.ts` compares twenty Python parity vectors per
+model with the JavaScript output.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Deploy
+
+`vercel.json` is prepared for a Vercel import with the project root set to `web/`. Nothing has been
+deployed from this repository. No environment variables are required.
+
+## Structure
+
+```
+src/app/          Home, Play, Learn, Compare, Teacher and About routes
+src/components/   Board, reports, charts, navigation and the hero instrument
+src/lib/engine/   Rules, inference, analysis and parity tests
+src/lib/          Artifact types, fetchers and level copy
+public/artifacts/ Notebook output copied for the browser
+```

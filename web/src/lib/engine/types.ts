@@ -23,7 +23,7 @@ export interface ModelWeightsPayload {
   input_shape: number[];
   input_encoding: string;
   output: string;
-  model_config: any;
+  model_config: unknown;
   layers: LayerPayload[];
 }
 

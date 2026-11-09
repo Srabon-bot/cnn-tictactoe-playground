@@ -1,174 +1,140 @@
-import Link from 'next/link';
-import { ArrowRight, Brain, Cpu, Sparkles, BookOpen, GraduationCap, BarChart2, ShieldCheck } from 'lucide-react';
+import Link from "next/link";
+import { HeroInstrument } from "@/components/HeroInstrument";
+import { OpponentList } from "@/components/OpponentList";
 
-export default function Home() {
-  const levels = [
-    {
-      id: 'underfit',
-      title: 'Level 1: Beginner',
-      subtitle: 'Underfitted CNN (191 params)',
-      analogy: 'Skimmed the book for 5 minutes',
-      badge: 'Underfit',
-      badgeColor: 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300',
-      icon: Cpu,
-      description:
-        'Lacks the capacity to recognize winning lines. Regularly misses immediate wins (62.5% missed) and tries to play occupied squares (47.8% illegal attempts).',
-    },
-    {
-      id: 'overfit',
-      title: 'Level 2: Memorizer',
-      subtitle: 'Overfitted CNN (687,625 params)',
-      analogy: "Memorized last year's exam answers",
-      badge: 'Overfit',
-      badgeColor: 'bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300',
-      icon: Brain,
-      description:
-        '100% accurate on its 60 practice positions, but collapses to 73.8% on new boards. A steep 26.2% generalization gap demonstrates that memorizing is not understanding.',
-    },
-    {
-      id: 'stable',
-      title: 'Level 3: Master',
-      subtitle: 'Stable & Regularized (93,833 params)',
-      analogy: 'Understood the underlying concepts',
-      badge: 'Optimal',
-      badgeColor: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300',
-      icon: Sparkles,
-      description:
-        'Trained with 8× symmetry augmentation and dropout. Reaches 95.9% test accuracy on unseen boards, makes 0% illegal attempts, and draws 86.5% of games against minimax.',
-    },
-  ];
-
+export default function HomePage() {
   return (
-    <div className="space-y-16 py-10 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
-      {/* Hero Section */}
-      <section className="text-center space-y-6 pt-4 sm:pt-10">
-        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-indigo-200 dark:border-indigo-800/80 bg-indigo-50/60 dark:bg-indigo-950/40 text-xs font-semibold text-indigo-700 dark:text-indigo-300">
-          <GraduationCap className="h-4 w-4" />
-          <span>Department of Computer Science & Engineering • UITS</span>
-        </div>
-
-        <h1 className="text-4xl sm:text-6xl font-black tracking-tight text-zinc-900 dark:text-white max-w-4xl mx-auto leading-tight">
-          Learn by Playing:{' '}
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-violet-500 dark:from-indigo-400 dark:to-violet-400">
-            A CNN Tic-Tac-Toe Game
-          </span>{' '}
-          for Teaching Overfitting & Generalization
-        </h1>
-
-        <p className="text-base sm:text-lg text-zinc-600 dark:text-zinc-400 max-w-2xl mx-auto leading-relaxed">
-          Play against three distinct convolutional neural networks trained on the exact same game. Inspect real-time 3×3 probability heatmaps to see what happens when AI barely learns, memorizes, or truly generalizes.
-        </p>
-
-        <div className="flex flex-wrap items-center justify-center gap-4 pt-2">
-          <Link
-            href="/play"
-            className="flex items-center gap-2 px-6 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-sm shadow-lg hover:shadow-indigo-500/25 transition-all cursor-pointer"
-          >
-            <span>Start Playing Now</span>
-            <ArrowRight className="h-4 w-4" />
-          </Link>
-          <Link
-            href="/compare"
-            className="flex items-center gap-2 px-6 py-3 rounded-2xl bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-900 dark:text-white font-bold text-sm transition-all cursor-pointer border border-zinc-200 dark:border-zinc-700"
-          >
-            <BarChart2 className="h-4 w-4" />
-            <span>Compare AI Metrics</span>
-          </Link>
+    <main>
+      <section className="hero" aria-labelledby="hero-title">
+        <div className="hero-shade" aria-hidden="true" />
+        <div className="container hero-inner">
+          <div className="hero-copy">
+            <p className="label" style={{ color: "var(--color-band-ink)", opacity: 0.7 }}>
+              Three convolutional networks · one board
+            </p>
+            <h1 id="hero-title" className="display">
+              Three minds, one board.
+            </h1>
+            <p className="lead">
+              Play tic-tac-toe against a network that underfit, one that memorised sixty boards,
+              and one that learned the game. Open any move and see the nine scores behind it.
+            </p>
+            <div className="hero-actions">
+              <Link href="/play" className="btn btn--primary">
+                Take a turn
+              </Link>
+              <Link href="/compare" className="btn btn--secondary">
+                See the measurements
+              </Link>
+            </div>
+          </div>
+          <HeroInstrument />
         </div>
       </section>
 
-      {/* The 3 Levels Section */}
-      <section className="space-y-6">
-        <div className="text-center space-y-1">
-          <h2 className="text-2xl sm:text-3xl font-black text-zinc-900 dark:text-white">
-            Meet the Three Opponents
-          </h2>
-          <p className="text-sm text-zinc-500 dark:text-zinc-400">
-            Each AI represents a foundational concept in Machine Learning
-          </p>
+      <section className="section" aria-labelledby="opponents-title">
+        <div className="container">
+          <div className="section-head">
+            <h2 id="opponents-title">Pick an opponent</h2>
+            <p className="section-note">
+              Same rules, same board, three different amounts of learning. The figures come
+              from the final notebook run.
+            </p>
+          </div>
+          <OpponentList />
         </div>
+      </section>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {levels.map(lvl => {
-            const Icon = lvl.icon;
-            return (
-              <div
-                key={lvl.id}
-                className="flex flex-col justify-between p-6 rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm hover:shadow-md transition-all space-y-4"
-              >
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div className="p-3 rounded-2xl bg-indigo-50 text-indigo-600 dark:bg-indigo-950 dark:text-indigo-400">
-                      <Icon className="h-6 w-6" />
-                    </div>
-                    <span className={`text-[10px] uppercase font-extrabold px-2.5 py-1 rounded-full ${lvl.badgeColor}`}>
-                      {lvl.badge}
-                    </span>
-                  </div>
-
-                  <div>
-                    <h3 className="text-xl font-black text-zinc-900 dark:text-white">{lvl.title}</h3>
-                    <p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium">{lvl.subtitle}</p>
-                  </div>
-
-                  <div className="p-3 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-100 dark:border-zinc-800">
-                    <span className="text-[10px] uppercase font-bold text-indigo-600 dark:text-indigo-400 block mb-0.5">
-                      Student Analogy:
-                    </span>
-                    <p className="text-xs font-semibold text-zinc-800 dark:text-zinc-200 italic">
-                      &quot;{lvl.analogy}&quot;
-                    </p>
-                  </div>
-
-                  <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">
-                    {lvl.description}
+      <section className="section section--band" aria-labelledby="report-title">
+        <div className="container">
+          <div className="procedure">
+            <div className="procedure-copy">
+              <h2 id="report-title" className="statement">
+                A game is a short lesson.
+              </h2>
+              <p>
+                The board is ordinary tic-tac-toe. What changes is that every network move is
+                recorded, scored and explained in plain language when the game ends.
+              </p>
+            </div>
+            <ol className="procedure-steps">
+              <li>
+                <span className="step-index">01</span>
+                <div>
+                  <h3>You move first as X</h3>
+                  <p>Or take O and watch the network open. X always starts.</p>
+                </div>
+              </li>
+              <li>
+                <span className="step-index">02</span>
+                <div>
+                  <h3>The network scores all nine cells</h3>
+                  <p>
+                    The highest legal score is the move. The heat map shows the rest of its
+                    answer, not a story written afterwards.
                   </p>
                 </div>
-
-                <Link
-                  href={`/play`}
-                  className="w-full py-2.5 px-4 rounded-xl text-center text-xs font-bold text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800/80 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 transition-colors"
-                >
-                  Challenge {lvl.title.split(':')[1]}
-                </Link>
-              </div>
-            );
-          })}
+              </li>
+              <li>
+                <span className="step-index">03</span>
+                <div>
+                  <h3>The report names what it missed</h3>
+                  <p>
+                    A win it could have taken, a block it walked past, or a square it wanted
+                    that was already occupied.
+                  </p>
+                </div>
+              </li>
+            </ol>
+          </div>
         </div>
       </section>
 
-      {/* Feature Showcase Grid */}
-      <section className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4">
-        <div className="p-6 rounded-3xl bg-zinc-50 dark:bg-zinc-900/60 border border-zinc-200 dark:border-zinc-800 space-y-2">
-          <div className="p-2 w-fit rounded-xl bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300">
-            <BookOpen className="h-5 w-5" />
+      <section className="section" aria-labelledby="read-title">
+        <div className="container">
+          <div className="section-head">
+            <h2 id="read-title">Read the working</h2>
+            <p className="section-note">
+              The site is the demonstration. The notebook is the evidence.
+            </p>
           </div>
-          <h4 className="font-bold text-zinc-900 dark:text-white text-base">Move-by-Move Heatmaps</h4>
-          <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">
-            Every AI turn records the exact 3×3 probability vector before and after legal-move masking, allowing you to peek directly into the network&apos;s weights.
-          </p>
-        </div>
-
-        <div className="p-6 rounded-3xl bg-zinc-50 dark:bg-zinc-900/60 border border-zinc-200 dark:border-zinc-800 space-y-2">
-          <div className="p-2 w-fit rounded-xl bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">
-            <ShieldCheck className="h-5 w-5" />
+          <div className="destination-list">
+            <Link className="destination" href="/learn">
+              <span className="destination-title">Learn the ideas</span>
+              <p>Filters, loss, underfitting, overfitting and why symmetry splits matter.</p>
+              <span className="destination-go">Start reading</span>
+            </Link>
+            <Link className="destination" href="/compare">
+              <span className="destination-title">Compare the three</span>
+              <p>Accuracy, training curves, game records and the same board read three ways.</p>
+              <span className="destination-go">Open the figures</span>
+            </Link>
+            <Link className="destination" href="/teacher">
+              <span className="destination-title">For the course</span>
+              <p>Concept map, acceptance checks, notebook and artifact downloads.</p>
+              <span className="destination-go">Teacher view</span>
+            </Link>
+            <Link className="destination" href="/about">
+              <span className="destination-title">Meet the team</span>
+              <p>Who built it, and what each person did.</p>
+              <span className="destination-go">About the project</span>
+            </Link>
           </div>
-          <h4 className="font-bold text-zinc-900 dark:text-white text-base">Ground-Truth Parity</h4>
-          <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">
-            Client-side browser inference is mathematically verified against Python test vectors, guaranteeing identical predictions between Python and JavaScript.
-          </p>
-        </div>
-
-        <div className="p-6 rounded-3xl bg-zinc-50 dark:bg-zinc-900/60 border border-zinc-200 dark:border-zinc-800 space-y-2">
-          <div className="p-2 w-fit rounded-xl bg-violet-100 text-violet-700 dark:bg-violet-950 dark:text-violet-300">
-            <GraduationCap className="h-5 w-5" />
-          </div>
-          <h4 className="font-bold text-zinc-900 dark:text-white text-base">Teacher Evidence View</h4>
-          <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">
-            A dedicated academic dashboard that connects course syllabus concepts (Loss, Convolutions, Regularization, Augmentation) directly to empirical evidence.
-          </p>
         </div>
       </section>
-    </div>
+
+      <section className="section section--ink" aria-labelledby="closing-title">
+        <div className="container">
+          <div className="closing">
+            <h2 id="closing-title" className="statement">
+              No account. No score kept. Just the board.
+            </h2>
+            <Link href="/play" className="btn btn--primary">
+              Play the steady network
+            </Link>
+          </div>
+        </div>
+      </section>
+    </main>
   );
 }

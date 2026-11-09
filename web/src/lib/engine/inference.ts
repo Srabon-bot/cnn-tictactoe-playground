@@ -1,5 +1,41 @@
 import { Board, ModelLevel, ModelWeightsPayload, Player } from './types';
-import { getBestLegalMove, toMoverPerspective } from './rules';
+import { getBestLegalMove, immediateWins, toMoverPerspective } from './rules';
+
+/** The eight board symmetries, as index permutations (four turns, each mirrored). */
+const SYMMETRY_PERMS: number[][] = (() => {
+  const base = [0, 1, 2, 3, 4, 5, 6, 7, 8];
+  const rotate = (grid: number[]): number[] => [
+    grid[6], grid[3], grid[0],
+    grid[7], grid[4], grid[1],
+    grid[8], grid[5], grid[2],
+  ];
+  const mirror = (grid: number[]): number[] => [
+    grid[2], grid[1], grid[0],
+    grid[5], grid[4], grid[3],
+    grid[8], grid[7], grid[6],
+  ];
+  const perms: number[][] = [];
+  for (const reflected of [false, true]) {
+    let grid = reflected ? mirror(base) : base;
+    for (let turn = 0; turn < 4; turn += 1) {
+      perms.push(grid);
+      grid = rotate(grid);
+    }
+  }
+  return perms;
+})();
+
+function applyPermutation<T>(values: T[], perm: number[]): T[] {
+  return perm.map(index => values[index]);
+}
+
+function inversePermutation(perm: number[]): number[] {
+  const inverse = new Array<number>(perm.length);
+  perm.forEach((target, source) => {
+    inverse[target] = source;
+  });
+  return inverse;
+}
 
 export class NeuralNetworkModel {
   readonly level: ModelLevel;
@@ -154,17 +190,43 @@ export class NeuralNetworkModel {
   }
 
   /**
-   * Evaluates a board for player, returning raw probabilities, masked choice,
-   * and whether the raw highest probability cell was occupied.
+   * Average the network's nine-cell output over the eight board symmetries.
+   * A rotated board is the same game, so this steadying step removes a little
+   * orientation noise without changing the weights.
    */
-  evaluateMove(board: Board, player: Player): {
+  predictAveraged(board: Board, player: Player): number[] {
+    const total = new Array(9).fill(0);
+    for (const perm of SYMMETRY_PERMS) {
+      const symmetricBoard = applyPermutation([...board], perm) as Board;
+      const prediction = this.predict(toMoverPerspective(symmetricBoard, player));
+      const restored = applyPermutation(prediction, inversePermutation(perm));
+      for (let index = 0; index < 9; index += 1) {
+        total[index] += restored[index];
+      }
+    }
+    return total.map(value => value / SYMMETRY_PERMS.length);
+  }
+
+  /**
+   * Evaluates a board for player, returning raw probabilities, the chosen move,
+   * and whether the raw highest probability cell was occupied.
+   *
+   * `steady` is the policy used by the steady opponent. It averages the model over
+   * the eight symmetries and applies two safe tactical guards: take a forced win,
+   * and block the opponent's only immediate threat. Both guards prevent an
+   * immediate loss; neither invents a move when the position is already decided.
+   */
+  evaluateMove(
+    board: Board,
+    player: Player,
+    mode: 'plain' | 'steady' = 'plain'
+  ): {
     probabilities: number[];
     chosenMove: number;
     wasUnmaskedIllegal: boolean;
   } {
-    const tensor = toMoverPerspective(board, player);
-    const probabilities = this.predict(tensor);
-    const chosenMove = getBestLegalMove(board, probabilities);
+    const probabilities =
+      mode === 'steady' ? this.predictAveraged(board, player) : this.predict(toMoverPerspective(board, player));
 
     let rawArgmax = 0;
     let maxP = -Infinity;
@@ -175,6 +237,22 @@ export class NeuralNetworkModel {
       }
     }
     const wasUnmaskedIllegal = board[rawArgmax] !== 0;
+
+    let chosenMove = getBestLegalMove(board, probabilities);
+    if (mode === 'steady') {
+      const wins = immediateWins(board, player);
+      if (wins.length > 0) {
+        chosenMove = wins.reduce((best, move) =>
+          probabilities[move] > probabilities[best] ? move : best
+        );
+      } else {
+        const opponent = (player === 1 ? -1 : 1) as Player;
+        const threats = immediateWins(board, opponent);
+        if (threats.length === 1) {
+          chosenMove = threats[0];
+        }
+      }
+    }
 
     return {
       probabilities,

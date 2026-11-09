@@ -1,285 +1,297 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { ModelLevel } from '@/lib/engine/types';
-import { fetchGameplay, fetchHistory, fetchMetrics, ModelGameplay, ModelHistory, ModelMetrics } from '@/lib/data';
-import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend, LineChart, Line, CartesianGrid } from 'recharts';
-import { BarChart2, TrendingUp, Layers, CheckCircle2, AlertTriangle, ShieldCheck } from 'lucide-react';
+import React from 'react';
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Legend,
+  Line,
+  LineChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from 'recharts';
+import { Board } from '@/lib/engine/types';
+import { SameBoardComparison } from '@/components/SameBoardComparison';
+import { LEVELS } from '@/lib/levels';
+import { percent, useArtifacts } from '@/lib/useArtifacts';
 
-export default function ComparePage() {
-  const [metrics, setMetrics] = useState<Record<ModelLevel, ModelMetrics> | null>(null);
-  const [history, setHistory] = useState<Record<ModelLevel, ModelHistory> | null>(null);
-  const [gameplay, setGameplay] = useState<Record<ModelLevel, ModelGameplay> | null>(null);
-  const [selectedOverlay, setSelectedOverlay] = useState<'loss' | 'accuracy'>('accuracy');
+const BOARD: Board = [-1, -1, 0, 0, 1, 0, 1, 1, 0];
 
-  useEffect(() => {
-    Promise.all([fetchMetrics(), fetchHistory(), fetchGameplay()]).then(([m, h, g]) => {
-      setMetrics(m);
-      setHistory(h);
-      setGameplay(g);
-    });
-  }, []);
+function accuracyData(metrics: NonNullable<ReturnType<typeof useArtifacts>['data']>['metrics']) {
+  return LEVELS.map((level) => {
+    const row = metrics[level.id];
+    return {
+      name: level.name,
+      Train: Number((row.train_acc * 100).toFixed(1)),
+      Test: Number((row.test_acc * 100).toFixed(1)),
+      'Test after mask': Number(((row.test_acc_masked ?? row.test_acc) * 100).toFixed(1)),
+    };
+  });
+}
 
-  if (!metrics || !history || !gameplay) {
-    return (
-      <div className="min-h-[60vh] flex items-center justify-center text-sm font-semibold text-zinc-500">
-        Loading comparative models data...
-      </div>
-    );
-  }
+function gameplayData(gameplay: NonNullable<ReturnType<typeof useArtifacts>['data']>['gameplay']) {
+  return LEVELS.map((level) => {
+    const random = gameplay[level.id].random;
+    return {
+      name: `${level.name} vs random`,
+      Wins: Number(((random.wins / random.games) * 100).toFixed(1)),
+      Draws: Number(((random.draws / random.games) * 100).toFixed(1)),
+      Losses: Number(((random.losses / random.games) * 100).toFixed(1)),
+    };
+  });
+}
 
-  // Format accuracy bar data
-  const accuracyBarData = [
-    {
-      name: 'Beginner (Underfit)',
-      Train: Number((metrics.underfit.train_acc * 100).toFixed(1)),
-      Validation: Number((metrics.underfit.val_acc * 100).toFixed(1)),
-      Test: Number((metrics.underfit.test_acc * 100).toFixed(1)),
-    },
-    {
-      name: 'Memorizer (Overfit)',
-      Train: Number((metrics.overfit.train_acc * 100).toFixed(1)),
-      Validation: Number((metrics.overfit.val_acc * 100).toFixed(1)),
-      Test: Number((metrics.overfit.test_acc * 100).toFixed(1)),
-    },
-    {
-      name: 'Master (Stable)',
-      Train: Number((metrics.stable.train_acc * 100).toFixed(1)),
-      Validation: Number((metrics.stable.val_acc * 100).toFixed(1)),
-      Test: Number((metrics.stable.test_acc * 100).toFixed(1)),
-    },
-  ];
-
-  // Format gameplay distribution data
-  const gameplayWdlData = [
-    {
-      name: 'Underfit vs Random',
-      Wins: Number(((gameplay.underfit.random.wins / 1000) * 100).toFixed(1)),
-      Draws: Number(((gameplay.underfit.random.draws / 1000) * 100).toFixed(1)),
-      Losses: Number(((gameplay.underfit.random.losses / 1000) * 100).toFixed(1)),
-    },
-    {
-      name: 'Overfit vs Random',
-      Wins: Number(((gameplay.overfit.random.wins / 1000) * 100).toFixed(1)),
-      Draws: Number(((gameplay.overfit.random.draws / 1000) * 100).toFixed(1)),
-      Losses: Number(((gameplay.overfit.random.losses / 1000) * 100).toFixed(1)),
-    },
-    {
-      name: 'Stable vs Random',
-      Wins: Number(((gameplay.stable.random.wins / 1000) * 100).toFixed(1)),
-      Draws: Number(((gameplay.stable.random.draws / 1000) * 100).toFixed(1)),
-      Losses: Number(((gameplay.stable.random.losses / 1000) * 100).toFixed(1)),
-    },
-    {
-      name: 'Stable vs Minimax',
-      Wins: 0,
-      Draws: Number(((gameplay.stable.minimax.draws / 200) * 100).toFixed(1)),
-      Losses: Number(((gameplay.stable.minimax.losses / 200) * 100).toFixed(1)),
-    },
-  ];
-
-  // Training curves alignment (max epochs)
-  const maxEpochs = Math.max(
-    history.underfit.accuracy.length,
-    history.overfit.accuracy.length,
-    history.stable.accuracy.length
-  );
-
-  const curveData = [];
-  for (let ep = 0; ep < Math.min(maxEpochs, 60); ep++) {
-    curveData.push({
-      epoch: ep + 1,
-      underfitVal: history.underfit.val_accuracy[ep] ? Number((history.underfit.val_accuracy[ep] * 100).toFixed(1)) : null,
-      overfitVal: history.overfit.val_accuracy[ep] ? Number((history.overfit.val_accuracy[ep] * 100).toFixed(1)) : null,
-      stableVal: history.stable.val_accuracy[ep] ? Number((history.stable.val_accuracy[ep] * 100).toFixed(1)) : null,
-      underfitLoss: history.underfit.val_loss[ep] ? Number(history.underfit.val_loss[ep].toFixed(2)) : null,
-      overfitLoss: history.overfit.val_loss[ep] ? Number(history.overfit.val_loss[ep].toFixed(2)) : null,
-      stableLoss: history.stable.val_loss[ep] ? Number(history.stable.val_loss[ep].toFixed(2)) : null,
+function curveData(history: NonNullable<ReturnType<typeof useArtifacts>['data']>['history']) {
+  const longest = Math.max(...LEVELS.map((level) => history[level.id].val_accuracy.length));
+  const rows = [];
+  for (let epoch = 0; epoch < Math.min(longest, 60); epoch += 1) {
+    rows.push({
+      epoch: epoch + 1,
+      Beginner: history.underfit.val_accuracy[epoch] !== undefined
+        ? Number((history.underfit.val_accuracy[epoch] * 100).toFixed(1))
+        : null,
+      Memorizer: history.overfit.val_accuracy[epoch] !== undefined
+        ? Number((history.overfit.val_accuracy[epoch] * 100).toFixed(1))
+        : null,
+      Steady: history.stable.val_accuracy[epoch] !== undefined
+        ? Number((history.stable.val_accuracy[epoch] * 100).toFixed(1))
+        : null,
     });
   }
+  return rows;
+}
 
+function ChartTooltip({
+  active,
+  payload,
+  label,
+}: {
+  active?: boolean;
+  payload?: Array<{ name?: string; value?: number | string; color?: string }>;
+  label?: string | number;
+}) {
+  if (!active || !payload?.length) return null;
   return (
-    <div className="py-8 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-10">
-      {/* Page Title */}
-      <div className="text-center space-y-2">
-        <h1 className="text-3xl sm:text-4xl font-black text-zinc-900 dark:text-white">
-          Side-by-Side Model Comparison
-        </h1>
-        <p className="text-sm text-zinc-600 dark:text-zinc-400 max-w-2xl mx-auto">
-          Compare the three CNN architectures side-by-side using empirical validation curves, generalization drops, and game-play distributions.
+    <div className="chart-tooltip">
+      <p className="label">{label}</p>
+      {payload.map((item) => (
+        <p key={item.name} style={{ color: item.color }}>
+          {item.name}: {item.value}%
         </p>
-      </div>
-
-      {/* Summary Comparison Table */}
-      <div className="bg-white dark:bg-zinc-900 rounded-3xl p-6 border border-zinc-200 dark:border-zinc-800 shadow-sm overflow-x-auto">
-        <h2 className="text-base font-extrabold text-zinc-900 dark:text-white mb-4 flex items-center gap-2">
-          <Layers className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
-          Empirical Metrics Summary Table
-        </h2>
-        <table className="w-full text-left text-xs sm:text-sm">
-          <thead>
-            <tr className="border-b border-zinc-200 dark:border-zinc-800 text-zinc-500 font-bold uppercase tracking-wider text-[11px]">
-              <th className="pb-3 pr-4">Model</th>
-              <th className="pb-3 pr-4">Parameters</th>
-              <th className="pb-3 pr-4">Practice Acc</th>
-              <th className="pb-3 pr-4">Validation Acc</th>
-              <th className="pb-3 pr-4">Test Acc</th>
-              <th className="pb-3 pr-4">Generalization Gap</th>
-              <th className="pb-3 pr-4">Raw Illegal Move Rate</th>
-              <th className="pb-3">Missed Win Rate</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800/60 font-medium">
-            <tr>
-              <td className="py-3.5 font-bold text-amber-600 dark:text-amber-400">Beginner (Underfit)</td>
-              <td className="py-3.5">191</td>
-              <td className="py-3.5">{(metrics.underfit.train_acc * 100).toFixed(1)}%</td>
-              <td className="py-3.5">{(metrics.underfit.val_acc * 100).toFixed(1)}%</td>
-              <td className="py-3.5">{(metrics.underfit.test_acc * 100).toFixed(1)}%</td>
-              <td className="py-3.5 text-zinc-500">-0.9%</td>
-              <td className="py-3.5 text-rose-600 dark:text-rose-400">{(metrics.underfit.illegal_rate * 100).toFixed(1)}%</td>
-              <td className="py-3.5 text-rose-600 dark:text-rose-400">{(metrics.underfit.missed_win_rate * 100).toFixed(1)}%</td>
-            </tr>
-            <tr>
-              <td className="py-3.5 font-bold text-rose-600 dark:text-rose-400">Memorizer (Overfit)</td>
-              <td className="py-3.5">687,625</td>
-              <td className="py-3.5 font-bold text-emerald-600">{(metrics.overfit.train_acc * 100).toFixed(1)}%</td>
-              <td className="py-3.5">{(metrics.overfit.val_acc * 100).toFixed(1)}%</td>
-              <td className="py-3.5">{(metrics.overfit.test_acc * 100).toFixed(1)}%</td>
-              <td className="py-3.5 font-extrabold text-rose-600 dark:text-rose-400">+26.2%</td>
-              <td className="py-3.5">{(metrics.overfit.illegal_rate * 100).toFixed(1)}%</td>
-              <td className="py-3.5">{(metrics.overfit.missed_win_rate * 100).toFixed(1)}%</td>
-            </tr>
-            <tr>
-              <td className="py-3.5 font-bold text-emerald-600 dark:text-emerald-400">Master (Stable)</td>
-              <td className="py-3.5">93,833</td>
-              <td className="py-3.5">{(metrics.stable.train_acc * 100).toFixed(1)}%</td>
-              <td className="py-3.5">{(metrics.stable.val_acc * 100).toFixed(1)}%</td>
-              <td className="py-3.5 font-extrabold text-emerald-600">{(metrics.stable.test_acc * 100).toFixed(1)}%</td>
-              <td className="py-3.5 text-emerald-600">+1.6%</td>
-              <td className="py-3.5 font-bold text-emerald-600">0.0%</td>
-              <td className="py-3.5 text-emerald-600">{(metrics.stable.missed_win_rate * 100).toFixed(1)}%</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      {/* Accuracy Comparison Chart */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <div className="bg-white dark:bg-zinc-900 rounded-3xl p-6 border border-zinc-200 dark:border-zinc-800 shadow-sm space-y-4">
-          <div>
-            <h3 className="text-base font-extrabold text-zinc-900 dark:text-white flex items-center gap-2">
-              <BarChart2 className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
-              Train vs Validation vs Test Accuracy
-            </h3>
-            <p className="text-xs text-zinc-500">Notice the massive 26.2% drop for the Memorizer model on test boards.</p>
-          </div>
-          <div className="h-72 w-full pt-4">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={accuracyBarData}>
-                <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-                <XAxis dataKey="name" tick={{ fontSize: 11 }} />
-                <YAxis unit="%" domain={[0, 105]} tick={{ fontSize: 11 }} />
-                <Tooltip formatter={(value) => `${value}%`} />
-                <Legend wrapperStyle={{ fontSize: '12px' }} />
-                <Bar dataKey="Train" fill="#6366f1" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="Validation" fill="#f59e0b" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="Test" fill="#10b981" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
-        {/* Gameplay Distribution Chart */}
-        <div className="bg-white dark:bg-zinc-900 rounded-3xl p-6 border border-zinc-200 dark:border-zinc-800 shadow-sm space-y-4">
-          <div>
-            <h3 className="text-base font-extrabold text-zinc-900 dark:text-white flex items-center gap-2">
-              <ShieldCheck className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
-              Gameplay Outcomes Distribution
-            </h3>
-            <p className="text-xs text-zinc-500">Based on 1,000 games vs random play and 200 games vs minimax adversary.</p>
-          </div>
-          <div className="h-72 w-full pt-4">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={gameplayWdlData}>
-                <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-                <XAxis dataKey="name" tick={{ fontSize: 10 }} />
-                <YAxis unit="%" domain={[0, 100]} tick={{ fontSize: 11 }} />
-                <Tooltip formatter={(value) => `${value}%`} />
-                <Legend wrapperStyle={{ fontSize: '12px' }} />
-                <Bar dataKey="Wins" stackId="a" fill="#10b981" radius={[0, 0, 0, 0]} />
-                <Bar dataKey="Draws" stackId="a" fill="#f59e0b" radius={[0, 0, 0, 0]} />
-                <Bar dataKey="Losses" stackId="a" fill="#ef4444" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-      </div>
-
-      {/* Validation Curves Overlay Chart */}
-      <div className="bg-white dark:bg-zinc-900 rounded-3xl p-6 border border-zinc-200 dark:border-zinc-800 shadow-sm space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div>
-            <h3 className="text-base font-extrabold text-zinc-900 dark:text-white flex items-center gap-2">
-              <TrendingUp className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
-              Validation Curves Overlay
-            </h3>
-            <p className="text-xs text-zinc-500">Watch how the models diverge across epochs on unseen validation data.</p>
-          </div>
-          <div className="flex items-center gap-2 text-xs font-semibold">
-            <button
-              onClick={() => setSelectedOverlay('accuracy')}
-              className={`px-3 py-1.5 rounded-lg border transition-all ${
-                selectedOverlay === 'accuracy'
-                  ? 'border-indigo-600 bg-indigo-50 text-indigo-600 dark:bg-indigo-950 dark:text-indigo-400 font-bold'
-                  : 'border-zinc-200 dark:border-zinc-800 text-zinc-600 hover:bg-zinc-100 dark:hover:bg-zinc-800'
-              }`}
-            >
-              Validation Accuracy
-            </button>
-            <button
-              onClick={() => setSelectedOverlay('loss')}
-              className={`px-3 py-1.5 rounded-lg border transition-all ${
-                selectedOverlay === 'loss'
-                  ? 'border-indigo-600 bg-indigo-50 text-indigo-600 dark:bg-indigo-950 dark:text-indigo-400 font-bold'
-                  : 'border-zinc-200 dark:border-zinc-800 text-zinc-600 hover:bg-zinc-100 dark:hover:bg-zinc-800'
-              }`}
-            >
-              Validation Loss
-            </button>
-          </div>
-        </div>
-
-        <div className="h-80 w-full pt-4">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={curveData}>
-              <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-              <XAxis dataKey="epoch" label={{ value: 'Epoch', position: 'insideBottom', offset: -5 }} tick={{ fontSize: 11 }} />
-              <YAxis
-                unit={selectedOverlay === 'accuracy' ? '%' : ''}
-                domain={selectedOverlay === 'accuracy' ? [40, 100] : [0, 4.5]}
-                tick={{ fontSize: 11 }}
-              />
-              <Tooltip />
-              <Legend wrapperStyle={{ fontSize: '12px' }} />
-              {selectedOverlay === 'accuracy' ? (
-                <>
-                  <Line type="monotone" dataKey="underfitVal" name="Underfit (Val Acc)" stroke="#f59e0b" strokeWidth={2} dot={false} />
-                  <Line type="monotone" dataKey="overfitVal" name="Overfit (Val Acc)" stroke="#ef4444" strokeWidth={2} dot={false} />
-                  <Line type="monotone" dataKey="stableVal" name="Stable (Val Acc)" stroke="#10b981" strokeWidth={3} dot={false} />
-                </>
-              ) : (
-                <>
-                  <Line type="monotone" dataKey="underfitLoss" name="Underfit (Val Loss)" stroke="#f59e0b" strokeWidth={2} dot={false} />
-                  <Line type="monotone" dataKey="overfitLoss" name="Overfit (Val Loss)" stroke="#ef4444" strokeWidth={2} dot={false} />
-                  <Line type="monotone" dataKey="stableLoss" name="Stable (Val Loss)" stroke="#10b981" strokeWidth={3} dot={false} />
-                </>
-              )}
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
+      ))}
     </div>
   );
 }
 
+export default function ComparePage() {
+  const { data, error } = useArtifacts();
+
+  return (
+    <main>
+      <div className="container">
+        <div className="page-head">
+          <p className="label">Compare</p>
+          <h1 className="display">The same game, three ways</h1>
+          <p className="lead">
+            All three networks learned the same task from the same data, with different amounts
+            of capacity and practice. These are the differences that matter.
+          </p>
+        </div>
+
+        {error ? (
+          <p role="alert" className="note-block" style={{ marginTop: 'var(--space-xl)' }}>
+            {error}
+          </p>
+        ) : !data ? (
+          <p className="muted" style={{ paddingBlock: 'var(--space-xl)' }}>
+            Reading the measurements.
+          </p>
+        ) : (
+          <>
+            <section className="section section--tight" aria-labelledby="figures-title">
+              <div className="section-head">
+                <h2 id="figures-title">Three measurements, side by side</h2>
+                <p className="section-note">
+                  Top-choice accuracy asks for a legal, optimal first answer. The post-mask score
+                  discards occupied cells before choosing, which is how the game is actually
+                  played.
+                </p>
+              </div>
+              {LEVELS.map((level) => {
+                const row = data.metrics[level.id];
+                return (
+                  <div className="figure-row" key={level.id}>
+                    <h2>{level.name}</h2>
+                    <p className="figure-note">{level.role}. {level.analogy}</p>
+                    <div className="figures">
+                      <div>
+                        <span className="figure-value">{percent(row.test_acc)}</span>
+                        <span className="figure-label">test top choice</span>
+                      </div>
+                      <div>
+                        <span className="figure-value">
+                          {percent(row.test_acc_masked ?? row.test_acc)}
+                        </span>
+                        <span className="figure-label">test after mask</span>
+                      </div>
+                      <div>
+                        <span className="figure-value">{row.params.toLocaleString('en-US')}</span>
+                        <span className="figure-label">parameters</span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </section>
+
+            <section className="section section--tight" aria-labelledby="table-title">
+              <div className="section-head section-head--wide">
+                <h2 id="table-title">Every number in one table</h2>
+                <p className="section-note">
+                  Illegal is the network&apos;s raw first choice landing on an occupied cell.
+                  Missed win is measured across all evaluated games.
+                </p>
+              </div>
+              <div className="table-wrap">
+                <table className="data-table">
+                  <thead>
+                    <tr>
+                      <th scope="col">Model</th>
+                      <th scope="col">Practice</th>
+                      <th scope="col">Validation</th>
+                      <th scope="col">Test</th>
+                      <th scope="col">Test after mask</th>
+                      <th scope="col">Gap</th>
+                      <th scope="col">Illegal</th>
+                      <th scope="col">Missed win</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {LEVELS.map((level) => {
+                      const row = data.metrics[level.id];
+                      const gap = row.train_acc - row.test_acc;
+                      return (
+                        <tr key={level.id}>
+                          <th scope="row">{level.name}</th>
+                          <td className="num">{percent(row.train_acc)}</td>
+                          <td className="num">{percent(row.val_acc)}</td>
+                          <td className="num">{percent(row.test_acc)}</td>
+                          <td className="num">{percent(row.test_acc_masked ?? row.test_acc)}</td>
+                          <td className="num">{`${gap >= 0 ? '+' : ''}${(gap * 100).toFixed(1)}`}</td>
+                          <td className="num">{percent(row.illegal_rate)}</td>
+                          <td className="num">{percent(row.missed_win_rate)}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+
+            <section className="section section--tight" aria-labelledby="accuracy-title">
+              <div className="section-head">
+                <h2 id="accuracy-title">Accuracy, and what the mask hides</h2>
+                <p className="section-note">
+                  On these labels, always taking the first empty cell already scores about 59%.
+                  The mask is generous; the top-choice score is the honest one.
+                </p>
+              </div>
+              <div className="chart-panel">
+                <div className="chart-panel-head">
+                  <h3>Train and test accuracy</h3>
+                  <span className="label">Per cent of boards</span>
+                </div>
+                <div className="chart-panel-body">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={accuracyData(data.metrics)} margin={{ top: 8, right: 8, bottom: 0, left: -20 }}>
+                      <CartesianGrid stroke="var(--color-rule)" vertical={false} />
+                      <XAxis dataKey="name" tick={{ fill: 'var(--color-muted)', fontSize: 12 }} tickLine={false} axisLine={{ stroke: 'var(--color-rule)' }} />
+                      <YAxis domain={[0, 105]} unit="%" tick={{ fill: 'var(--color-muted)', fontSize: 11 }} tickLine={false} axisLine={false} />
+                      <Tooltip content={<ChartTooltip />} cursor={{ fill: 'var(--color-paper-2)' }} />
+                      <Legend wrapperStyle={{ fontSize: 12 }} />
+                      <Bar dataKey="Train" fill="var(--color-ink-2)" radius={[3, 3, 0, 0]} />
+                      <Bar dataKey="Test" fill="var(--color-accent)" radius={[3, 3, 0, 0]} />
+                      <Bar dataKey="Test after mask" fill="var(--color-accent-soft)" stroke="var(--color-accent-2)" radius={[3, 3, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+            </section>
+
+            <section className="section section--tight" aria-labelledby="games-title">
+              <div className="section-head">
+                <h2 id="games-title">1,000 games against random play</h2>
+                <p className="section-note">
+                  Wins, draws and losses. The Steady model is the only one that never loses this
+                  set; it also draws every one of its 200 games against minimax.
+                </p>
+              </div>
+              <div className="chart-panel">
+                <div className="chart-panel-head">
+                  <h3>Share of games</h3>
+                  <span className="label">Random opponent</span>
+                </div>
+                <div className="chart-panel-body">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={gameplayData(data.gameplay)} margin={{ top: 8, right: 8, bottom: 0, left: -20 }}>
+                      <CartesianGrid stroke="var(--color-rule)" vertical={false} />
+                      <XAxis dataKey="name" tick={{ fill: 'var(--color-muted)', fontSize: 11 }} tickLine={false} axisLine={{ stroke: 'var(--color-rule)' }} />
+                      <YAxis domain={[0, 100]} unit="%" tick={{ fill: 'var(--color-muted)', fontSize: 11 }} tickLine={false} axisLine={false} />
+                      <Tooltip content={<ChartTooltip />} cursor={{ fill: 'var(--color-paper-2)' }} />
+                      <Legend wrapperStyle={{ fontSize: 12 }} />
+                      <Bar dataKey="Wins" stackId="games" fill="var(--color-accent)" />
+                      <Bar dataKey="Draws" stackId="games" fill="var(--color-paper-3)" stroke="var(--color-rule)" />
+                      <Bar dataKey="Losses" stackId="games" fill="var(--color-error)" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+            </section>
+
+            <section className="section section--tight" aria-labelledby="curves-title">
+              <div className="section-head">
+                <h2 id="curves-title">Validation accuracy over training</h2>
+                <p className="section-note">
+                  The Memorizer peaks and then drifts. The Beginner never climbs. The Steady
+                  model keeps rising and holds.
+                </p>
+              </div>
+              <div className="chart-panel">
+                <div className="chart-panel-head">
+                  <h3>Held-out boards, epoch by epoch</h3>
+                  <span className="label">Top-choice accuracy</span>
+                </div>
+                <div className="chart-panel-body">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={curveData(data.history)} margin={{ top: 8, right: 8, bottom: 0, left: -20 }}>
+                      <CartesianGrid stroke="var(--color-rule)" vertical={false} />
+                      <XAxis dataKey="epoch" tick={{ fill: 'var(--color-muted)', fontSize: 11 }} tickLine={false} axisLine={{ stroke: 'var(--color-rule)' }} />
+                      <YAxis domain={[0, 100]} unit="%" tick={{ fill: 'var(--color-muted)', fontSize: 11 }} tickLine={false} axisLine={false} />
+                      <Tooltip content={<ChartTooltip />} />
+                      <Legend wrapperStyle={{ fontSize: 12 }} />
+                      <Line type="monotone" dataKey="Beginner" stroke="var(--color-muted)" strokeWidth={2} dot={false} />
+                      <Line type="monotone" dataKey="Memorizer" stroke="var(--color-error)" strokeWidth={2} dot={false} />
+                      <Line type="monotone" dataKey="Steady" stroke="var(--color-accent)" strokeWidth={3} dot={false} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+            </section>
+
+            <section className="section" aria-labelledby="same-board-title">
+              <SameBoardComparison
+                board={BOARD}
+                mover={-1}
+                title="One board, three answers"
+                caption="O can finish the game at cell 3. The three networks read the same position differently, and the heat map is computed live from their exported weights."
+              />
+            </section>
+          </>
+        )}
+      </div>
+    </main>
+  );
+}

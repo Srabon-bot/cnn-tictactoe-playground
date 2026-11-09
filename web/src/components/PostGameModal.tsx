@@ -1,11 +1,20 @@
 'use client';
 
-import React from 'react';
-import { GameFindings, ModelLevel, MoveAnalysis } from '@/lib/engine/types';
-import { ModelMetrics } from '@/lib/data';
-import { MoveTimeline } from './MoveTimeline';
-import { AlertCircle, AlertTriangle, ArrowRight, CheckCircle2, RotateCcw, Trophy, X } from 'lucide-react';
+import React, { useEffect, useRef } from 'react';
 import Link from 'next/link';
+import {
+  CartesianGrid,
+  Line,
+  LineChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from 'recharts';
+import { GameFindings, ModelLevel, MoveAnalysis } from '@/lib/engine/types';
+import { ModelGameplay, ModelHistory, ModelMetrics } from '@/lib/data';
+import { LEVEL_BY_ID } from '@/lib/levels';
+import { MoveTimeline } from './MoveTimeline';
 
 interface PostGameModalProps {
   isOpen: boolean;
@@ -15,9 +24,49 @@ interface PostGameModalProps {
   moves: MoveAnalysis[];
   findings: GameFindings;
   metrics: ModelMetrics | null;
+  gameplay: Record<ModelLevel, ModelGameplay> | null;
+  history: Record<ModelLevel, ModelHistory> | null;
   explanationText: string;
   onPlayAgain: () => void;
 }
+
+interface ChartPoint {
+  epoch: number;
+  train: number;
+  validation: number;
+}
+
+function ChartTooltip({
+  active,
+  payload,
+  label,
+}: {
+  active?: boolean;
+  payload?: Array<{ name?: string; value?: number; color?: string }>;
+  label?: string | number;
+}) {
+  if (!active || !payload?.length) return null;
+  return (
+    <div className="chart-tooltip">
+      <p className="label">Epoch {label}</p>
+      {payload.map((item) => (
+        <p key={item.name} style={{ color: item.color }}>
+          {item.name}: {Math.round(item.value ?? 0)}%
+        </p>
+      ))}
+    </div>
+  );
+}
+
+function percent(value: number, digits = 1): string {
+  return `${(value * 100).toFixed(digits)}%`;
+}
+
+const OUTCOME_TITLE = {
+  win: 'You won.',
+  loss: 'The network won.',
+  draw: 'A draw.',
+} as const;
 
 export function PostGameModal({
   isOpen,
@@ -27,152 +76,233 @@ export function PostGameModal({
   moves,
   findings,
   metrics,
+  gameplay,
+  history,
   explanationText,
   onPlayAgain,
 }: PostGameModalProps) {
-  if (!isOpen) return null;
+  const dialogRef = useRef<HTMLDialogElement>(null);
+  const levelInfo = LEVEL_BY_ID[level];
 
-  const outcomeDetails = {
-    win: {
-      title: 'Victory!',
-      subtitle: 'You defeated the neural network!',
-      color: 'text-emerald-600 dark:text-emerald-400',
-      bg: 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800',
-    },
-    loss: {
-      title: 'Game Over',
-      subtitle: 'The AI prevailed this round.',
-      color: 'text-rose-600 dark:text-rose-400',
-      bg: 'bg-rose-50 dark:bg-rose-950/40 border-rose-200 dark:border-rose-800',
-    },
-    draw: {
-      title: 'Stalemate!',
-      subtitle: 'A well-matched contest ended in a draw.',
-      color: 'text-amber-600 dark:text-amber-400',
-      bg: 'bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-800',
-    },
-  }[outcome];
+  useEffect(() => {
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+    if (isOpen && !dialog.open) dialog.showModal();
+    if (!isOpen && dialog.open) dialog.close();
+  }, [isOpen]);
+
+  useEffect(() => {
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+    const handleCancel = (event: Event) => {
+      event.preventDefault();
+      onClose();
+    };
+    dialog.addEventListener('cancel', handleCancel);
+    return () => dialog.removeEventListener('cancel', handleCancel);
+  }, [onClose]);
+
+  const curve: ChartPoint[] =
+    history?.[level].accuracy.map((value, index) => ({
+      epoch: index + 1,
+      train: value * 100,
+      validation: (history[level].val_accuracy[index] ?? 0) * 100,
+    })) ?? [];
+
+  const modelGames = gameplay?.[level];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto">
-      <div className="relative w-full max-w-3xl my-8 bg-white dark:bg-zinc-900 rounded-3xl shadow-2xl border border-zinc-200 dark:border-zinc-800 overflow-hidden animate-in zoom-in-95 duration-200">
-        {/* Header Banner */}
-        <div className={`p-6 border-b ${outcomeDetails.bg} flex items-center justify-between`}>
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-2xl bg-white dark:bg-zinc-900 shadow-sm">
-              <Trophy className={`h-7 w-7 ${outcomeDetails.color}`} />
-            </div>
-            <div>
-              <h2 className={`text-2xl font-black ${outcomeDetails.color}`}>{outcomeDetails.title}</h2>
-              <p className="text-xs text-zinc-600 dark:text-zinc-400 font-medium">{outcomeDetails.subtitle}</p>
-            </div>
+    <dialog
+      ref={dialogRef}
+      className="report-dialog"
+      aria-labelledby="report-title"
+      onClick={(event) => {
+        if (event.target === dialogRef.current) onClose();
+      }}
+    >
+      <div className="report-sheet">
+        <div className="report-top">
+          <div>
+            <p className="label">
+              Match report · {levelInfo.name} · {outcome === 'win' ? 'you took the game' : 'board complete'}
+            </p>
+            <h2 id="report-title">{OUTCOME_TITLE[outcome]}</h2>
           </div>
-          <button
-            onClick={onClose}
-            className="p-2 rounded-full hover:bg-zinc-200/60 dark:hover:bg-zinc-800 text-zinc-500 transition-colors"
-          >
-            <X className="h-5 w-5" />
+          <button type="button" className="report-close" onClick={onClose} aria-label="Close report">
+            ✕
           </button>
         </div>
 
-        {/* Content Body */}
-        <div className="p-6 space-y-6 max-h-[72vh] overflow-y-auto">
-          {/* Key Findings in this specific game */}
-          <div className="space-y-3">
-            <h3 className="text-sm font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
-              Game-Specific AI Findings
-            </h3>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <div className="p-3 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-800">
-                <span className="text-[10px] uppercase font-bold text-zinc-500">Missed Wins</span>
-                <p className="text-xl font-black text-zinc-900 dark:text-white flex items-center gap-1.5 mt-0.5">
-                  {findings.missedWins > 0 ? (
-                    <span className="text-rose-600 dark:text-rose-400">{findings.missedWins}</span>
-                  ) : (
-                    <span className="text-emerald-600 dark:text-emerald-400">0</span>
-                  )}
-                </p>
-              </div>
+        <div className="report-body">
+          <div className="report-grid">
+            <div className="report-block">
+              <h3>What happened this game</h3>
+              <dl className="finding-list">
+                <div className="finding">
+                  <dt>Missed wins</dt>
+                  <dd>{findings.missedWins}</dd>
+                </div>
+                <div className="finding">
+                  <dt>Missed blocks</dt>
+                  <dd>{findings.missedBlocks}</dd>
+                </div>
+                <div className="finding">
+                  <dt>Occupied squares scored</dt>
+                  <dd>{findings.illegalAttempts}</dd>
+                </div>
+                <div className="finding">
+                  <dt>{level === 'overfit' ? 'Practice boards met' : 'Network moves'}</dt>
+                  <dd>
+                    {level === 'overfit'
+                      ? `${findings.familiarBoardsCount} / ${findings.totalAIMoves}`
+                      : findings.totalAIMoves}
+                  </dd>
+                </div>
+              </dl>
+            </div>
 
-              <div className="p-3 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-800">
-                <span className="text-[10px] uppercase font-bold text-zinc-500">Missed Blocks</span>
-                <p className="text-xl font-black text-zinc-900 dark:text-white flex items-center gap-1.5 mt-0.5">
-                  {findings.missedBlocks > 0 ? (
-                    <span className="text-rose-600 dark:text-rose-400">{findings.missedBlocks}</span>
-                  ) : (
-                    <span className="text-emerald-600 dark:text-emerald-400">0</span>
-                  )}
-                </p>
-              </div>
+            <div className="report-block">
+              <h3>Why it played this way</h3>
+              <p className="muted" style={{ fontSize: 'var(--text-sm)' }}>
+                {explanationText ||
+                  'This model learned what its training data allowed. The report above shows where those limits appeared.'}
+              </p>
+            </div>
 
-              <div className="p-3 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-800">
-                <span className="text-[10px] uppercase font-bold text-zinc-500">Illegal Attempts</span>
-                <p className="text-xl font-black text-zinc-900 dark:text-white flex items-center gap-1.5 mt-0.5">
-                  {findings.illegalAttempts > 0 ? (
-                    <span className="text-purple-600 dark:text-purple-400">{findings.illegalAttempts}</span>
-                  ) : (
-                    <span className="text-emerald-600 dark:text-emerald-400">0</span>
-                  )}
-                </p>
-              </div>
+            <div className="report-block">
+              <h3>The model on its exam</h3>
+              {metrics ? (
+                <table className="report-table">
+                  <tbody>
+                    <tr>
+                      <th>Practice boards</th>
+                      <td className="num">{percent(metrics.train_acc)}</td>
+                    </tr>
+                    <tr>
+                      <th>Held-out boards</th>
+                      <td className="num">{percent(metrics.val_acc)}</td>
+                    </tr>
+                    <tr>
+                      <th>Test boards</th>
+                      <td className="num">{percent(metrics.test_acc)}</td>
+                    </tr>
+                    {metrics.test_acc_masked !== undefined ? (
+                      <tr>
+                        <th>Test, after mask</th>
+                        <td className="num">{percent(metrics.test_acc_masked)}</td>
+                      </tr>
+                    ) : null}
+                    <tr>
+                      <th>Parameters</th>
+                      <td className="num">{metrics.params.toLocaleString('en-US')}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              ) : (
+                <p className="muted">Reading the measurements.</p>
+              )}
+            </div>
 
-              <div className="p-3 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-800">
-                <span className="text-[10px] uppercase font-bold text-zinc-500">Practice Boards</span>
-                <p className="text-xl font-black text-indigo-600 dark:text-indigo-400 mt-0.5">
-                  {level === 'overfit' ? `${findings.familiarBoardsCount}/${findings.totalAIMoves}` : 'N/A'}
-                </p>
-              </div>
+            <div className="report-block">
+              <h3>Across all its games</h3>
+              {modelGames ? (
+                <table className="report-table">
+                  <thead>
+                    <tr>
+                      <th>Opponent</th>
+                      <th className="num">W / D / L</th>
+                      <th className="num">Missed win</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <th>Random</th>
+                      <td className="num">
+                        {modelGames.random.wins} / {modelGames.random.draws} / {modelGames.random.losses}
+                      </td>
+                      <td className="num">{percent(modelGames.random.missed_win_rate)}</td>
+                    </tr>
+                    <tr>
+                      <th>Minimax</th>
+                      <td className="num">
+                        {modelGames.minimax.wins} / {modelGames.minimax.draws} / {modelGames.minimax.losses}
+                      </td>
+                      <td className="num">{percent(modelGames.minimax.missed_win_rate)}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              ) : (
+                <p className="muted">Reading the game log.</p>
+              )}
             </div>
           </div>
 
-          {/* Plain-Language Explanation of Why it happened */}
-          <div className="p-4 rounded-2xl bg-indigo-50/60 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-900/50 space-y-2">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
-              Why Did the AI Play This Way?
-            </h4>
-            <p className="text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed font-medium">
-              {explanationText ||
-                'This model learned based on its training capacity. Regularization and augmentation are necessary for neural nets to generalize to unseen positions.'}
-            </p>
-            {metrics && (
-              <div className="pt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-zinc-500 dark:text-zinc-400 border-t border-indigo-100/60 dark:border-indigo-900/40">
-                <span>Practice Accuracy: <strong>{(metrics.train_acc * 100).toFixed(0)}%</strong></span>
-                <span>Unseen Board Accuracy: <strong>{(metrics.test_acc * 100).toFixed(0)}%</strong></span>
-                <span>Generalization Gap: <strong>{((metrics.train_acc - metrics.test_acc) * 100).toFixed(0)}%</strong></span>
+          {curve.length > 0 ? (
+            <div className="report-block" style={{ marginTop: 'var(--space-lg)' }}>
+              <h3>The training curve behind this game</h3>
+              <div className="report-chart">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={curve} margin={{ top: 8, right: 8, bottom: 0, left: -18 }}>
+                    <CartesianGrid stroke="var(--color-rule)" vertical={false} />
+                    <XAxis
+                      dataKey="epoch"
+                      tick={{ fill: 'var(--color-muted)', fontSize: 11 }}
+                      tickLine={false}
+                      axisLine={{ stroke: 'var(--color-rule)' }}
+                    />
+                    <YAxis
+                      domain={[0, 100]}
+                      tick={{ fill: 'var(--color-muted)', fontSize: 11 }}
+                      tickLine={false}
+                      axisLine={false}
+                    />
+                    <Tooltip content={<ChartTooltip />} />
+                    <Line
+                      type="monotone"
+                      dataKey="train"
+                      name="Practice"
+                      stroke="var(--color-accent)"
+                      strokeWidth={2}
+                      dot={false}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="validation"
+                      name="Held-out"
+                      stroke="var(--color-ink-2)"
+                      strokeWidth={1.5}
+                      strokeDasharray="4 3"
+                      dot={false}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
               </div>
-            )}
-          </div>
+            </div>
+          ) : null}
 
-          {/* Move-by-move timeline with heatmaps */}
-          <MoveTimeline moves={moves} modelLevel={level} />
+          <div className="report-block" style={{ marginTop: 'var(--space-lg)' }}>
+            <h3>Every network move</h3>
+            <MoveTimeline moves={moves} modelLevel={level} />
+          </div>
         </div>
 
-        {/* Footer Actions */}
-        <div className="p-4 bg-zinc-50 dark:bg-zinc-900/90 border-t border-zinc-200 dark:border-zinc-800 flex flex-col sm:flex-row items-center justify-between gap-3">
-          <Link
-            href="/compare"
-            className="text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1"
-          >
-            Compare all 3 neural networks side-by-side <ArrowRight className="h-3.5 w-3.5" />
+        <div
+          className="report-top"
+          style={{ borderBottom: 0, borderTop: '1px solid var(--color-rule)', alignItems: 'center' }}
+        >
+          <Link href="/compare" className="text-link">
+            Compare all three networks
           </Link>
-
-          <div className="flex items-center gap-2.5 w-full sm:w-auto">
-            <button
-              onClick={onClose}
-              className="flex-1 sm:flex-none px-4 py-2 rounded-xl text-xs font-semibold text-zinc-700 dark:text-zinc-300 border border-zinc-300 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
-            >
-              Review Board
+          <div style={{ display: 'flex', gap: 'var(--space-sm)', flexWrap: 'wrap' }}>
+            <button type="button" className="btn btn--small" onClick={onClose}>
+              Review the board
             </button>
-            <button
-              onClick={onPlayAgain}
-              className="flex-1 sm:flex-none px-5 py-2 rounded-xl text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-500 shadow-md transition-all flex items-center justify-center gap-1.5"
-            >
-              <RotateCcw className="h-3.5 w-3.5" /> Play Again
+            <button type="button" className="btn btn--primary btn--small" onClick={onPlayAgain}>
+              Play again
             </button>
           </div>
         </div>
       </div>
-    </div>
+    </dialog>
   );
 }
-

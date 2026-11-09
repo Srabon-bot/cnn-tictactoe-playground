@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import React from 'react';
-import { Board, CellValue } from '@/lib/engine/types';
+import React from "react";
+import { Board, CellValue } from "@/lib/engine/types";
 
 interface BoardProps {
   board: Board;
@@ -9,6 +9,13 @@ interface BoardProps {
   disabled?: boolean;
   winningLine?: [number, number, number] | null;
   lastMoveIndex?: number | null;
+}
+
+function cellLabel(cell: CellValue, index: number): string {
+  const row = Math.floor(index / 3) + 1;
+  const column = (index % 3) + 1;
+  const mark = cell === 1 ? "X" : cell === -1 ? "O" : "empty";
+  return `Row ${row}, column ${column}, ${mark}`;
 }
 
 export function BoardComponent({
@@ -19,47 +26,27 @@ export function BoardComponent({
   lastMoveIndex = null,
 }: BoardProps) {
   return (
-    <div
-      className="grid grid-cols-3 gap-2 sm:gap-3 p-3 sm:p-4 bg-zinc-100 dark:bg-zinc-900/90 rounded-2xl shadow-xl border border-zinc-200 dark:border-zinc-800 w-full max-w-[360px] aspect-square mx-auto"
-      role="grid"
-      aria-label="Tic-Tac-Toe Game Board"
-    >
+    <div className="board" role="group" aria-label="Tic-tac-toe board">
       {board.map((cell: CellValue, index: number) => {
-        const isWinningCell = winningLine?.includes(index);
+        const isWinningCell = winningLine?.includes(index) ?? false;
         const isLastMove = lastMoveIndex === index;
 
         return (
           <button
             key={index}
+            type="button"
+            className="board-cell"
             onClick={() => onCellClick(index)}
             disabled={disabled || cell !== 0}
-            aria-label={`Cell ${index + 1}: ${cell === 1 ? 'X' : cell === -1 ? 'O' : 'Empty'}`}
-            className={`relative flex items-center justify-center rounded-xl font-black transition-all select-none focus:outline-none focus-visible:ring-4 focus-visible:ring-indigo-500 ${
-              cell === 0
-                ? 'bg-white dark:bg-zinc-800 hover:bg-indigo-50 dark:hover:bg-zinc-700/80 cursor-pointer shadow-sm active:scale-95'
-                : 'bg-zinc-50 dark:bg-zinc-800/60 cursor-default shadow-inner'
-            } ${
-              isWinningCell
-                ? 'bg-emerald-100 dark:bg-emerald-950/60 ring-4 ring-emerald-500 scale-105 z-10'
-                : isLastMove
-                ? 'ring-2 ring-indigo-400'
-                : ''
-            }`}
+            aria-label={cellLabel(cell, index)}
+            data-mark={cell === 1 ? "x" : cell === -1 ? "o" : undefined}
+            data-win={isWinningCell ? "true" : undefined}
+            data-last={isLastMove ? "true" : undefined}
           >
-            {cell === 1 && (
-              <span className="text-4xl sm:text-5xl text-indigo-600 dark:text-indigo-400 animate-in zoom-in-50 duration-150">
-                X
-              </span>
-            )}
-            {cell === -1 && (
-              <span className="text-4xl sm:text-5xl text-amber-500 dark:text-amber-400 animate-in zoom-in-50 duration-150">
-                O
-              </span>
-            )}
+            {cell === 1 ? "X" : cell === -1 ? "O" : null}
           </button>
         );
       })}
     </div>
   );
 }
-
