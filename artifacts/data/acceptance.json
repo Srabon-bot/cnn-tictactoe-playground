@@ -1,0 +1,182 @@
+{
+  "generated_at": "2026-11-09T02:29:49+00:00",
+  "runtime_seconds": 143.6,
+  "notebook": {
+    "executed_cells": 38,
+    "code_cells": 38,
+    "error_cells": 0
+  },
+  "reproducibility": {
+    "passed": true,
+    "detail": "metrics match",
+    "measured": true
+  },
+  "metrics": {
+    "underfit": {
+      "train_acc": 0.2049571020019066,
+      "val_acc": 0.1736613603473227,
+      "test_acc": 0.19941348973607037,
+      "train_acc_masked": 0.5513187162376867,
+      "val_acc_masked": 0.5600578871201157,
+      "test_acc_masked": 0.5557184750733137,
+      "params": 191,
+      "policy": "plain"
+    },
+    "overfit": {
+      "train_acc": 1.0,
+      "val_acc": 0.5369030390738061,
+      "test_acc": 0.5865102639296188,
+      "train_acc_masked": 1.0,
+      "val_acc_masked": 0.7380607814761215,
+      "test_acc_masked": 0.7463343108504399,
+      "params": 687625,
+      "policy": "plain"
+    },
+    "stable": {
+      "train_acc": 0.9996822370511599,
+      "val_acc": 0.984081041968162,
+      "test_acc": 0.9589442815249267,
+      "train_acc_masked": 0.9996822370511599,
+      "val_acc_masked": 0.984081041968162,
+      "test_acc_masked": 0.9589442815249267,
+      "params": 93833,
+      "policy": "steady"
+    }
+  },
+  "gameplay": {
+    "underfit": {
+      "random": {
+        "games": 1000,
+        "wins": 500,
+        "draws": 108,
+        "losses": 392,
+        "missed_win_rate": 0.6249062265566392,
+        "missed_block_rate": 0.8490066225165563,
+        "illegal_rate": 0.49446589446589445
+      },
+      "minimax": {
+        "games": 200,
+        "wins": 0,
+        "draws": 1,
+        "losses": 199,
+        "missed_win_rate": 0.0,
+        "missed_block_rate": 0.9765625,
+        "illegal_rate": 0.36769759450171824
+      }
+    },
+    "overfit": {
+      "random": {
+        "games": 1000,
+        "wins": 707,
+        "draws": 104,
+        "losses": 189,
+        "missed_win_rate": 0.33677298311444653,
+        "missed_block_rate": 0.6382189239332097,
+        "illegal_rate": 0.18532267275842376
+      },
+      "minimax": {
+        "games": 200,
+        "wins": 0,
+        "draws": 52,
+        "losses": 148,
+        "missed_win_rate": 0.0,
+        "missed_block_rate": 0.7533039647577092,
+        "illegal_rate": 0.3144399460188934
+      }
+    },
+    "stable": {
+      "random": {
+        "games": 1000,
+        "wins": 944,
+        "draws": 56,
+        "losses": 0,
+        "missed_win_rate": 0.0,
+        "missed_block_rate": 0.0,
+        "illegal_rate": 0.0
+      },
+      "minimax": {
+        "games": 200,
+        "wins": 0,
+        "draws": 200,
+        "losses": 0,
+        "missed_win_rate": 0.0,
+        "missed_block_rate": 0.0,
+        "illegal_rate": 0.0
+      }
+    }
+  },
+  "checks": [
+    {
+      "name": "Underfit validation accuracy (top choice)",
+      "passed": true,
+      "result": "17.4% (mask 56.0%)",
+      "target": "< 50%"
+    },
+    {
+      "name": "Underfit train accuracy is also low",
+      "passed": true,
+      "result": "20.5% (mask 55.1%)",
+      "target": "< 60%"
+    },
+    {
+      "name": "Underfit missed-win rate",
+      "passed": true,
+      "result": "62.5%",
+      "target": "> 30%"
+    },
+    {
+      "name": "Overfit train accuracy",
+      "passed": true,
+      "result": "100.0% (mask 100.0%)",
+      "target": ">= 98%"
+    },
+    {
+      "name": "Overfit train-validation gap",
+      "passed": true,
+      "result": "46.3%",
+      "target": ">= 25 points"
+    },
+    {
+      "name": "Stable test accuracy",
+      "passed": true,
+      "result": "95.9% (mask 95.9%)",
+      "target": ">= 95%"
+    },
+    {
+      "name": "Stable vs random",
+      "passed": true,
+      "result": "944W / 56D / 0L",
+      "target": "0 losses, >= 90% wins"
+    },
+    {
+      "name": "Stable vs minimax",
+      "passed": true,
+      "result": "0W / 200D / 0L",
+      "target": "0 losses"
+    },
+    {
+      "name": "Stable missed-win rate",
+      "passed": true,
+      "result": "0.0%",
+      "target": "< 1%"
+    },
+    {
+      "name": "Stable missed-block rate",
+      "passed": true,
+      "result": "0.0%",
+      "target": "< 1%"
+    },
+    {
+      "name": "Parity vectors",
+      "passed": true,
+      "result": "20 boards/model",
+      "target": ">= 20 per model"
+    },
+    {
+      "name": "Notebook runtime",
+      "passed": true,
+      "result": "2.4 min",
+      "target": "< 10 min"
+    }
+  ]
+}
