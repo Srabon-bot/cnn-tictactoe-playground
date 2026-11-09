@@ -1,0 +1,35 @@
+{
+  "underfit": {
+    "train_acc": 0.5513187162376867,
+    "val_acc": 0.5600578871201157,
+    "test_acc": 0.5557184750733137,
+    "train_loss": 2.2700276374816895,
+    "val_loss": 2.2754013538360596,
+    "params": 191,
+    "illegal_rate": 0.4779494067606895,
+    "missed_win_rate": 0.6249062265566392,
+    "missed_block_rate": 0.8813056379821959
+  },
+  "overfit": {
+    "train_acc": 1.0,
+    "val_acc": 0.7380607814761215,
+    "test_acc": 0.7463343108504399,
+    "train_loss": 0.5764115452766418,
+    "val_loss": 3.1411235332489014,
+    "params": 687625,
+    "illegal_rate": 0.20787178882865898,
+    "missed_win_rate": 0.33677298311444653,
+    "missed_block_rate": 0.6723237597911227
+  },
+  "stable": {
+    "train_acc": 0.9996822370511599,
+    "val_acc": 0.984081041968162,
+    "test_acc": 0.9589442815249267,
+    "train_loss": 0.5612493753433228,
+    "val_loss": 0.6470486521720886,
+    "params": 93833,
+    "illegal_rate": 0.0,
+    "missed_win_rate": 0.16152450090744103,
+    "missed_block_rate": 0.10017574692442882
+  }
+}
