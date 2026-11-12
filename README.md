@@ -186,3 +186,74 @@ Each model plays **1,200 games**: 1,000 against random play and 200 against mini
 | Exported artifacts | 3 `.keras` models, 3 `weights.json`, JSON metrics, 7 plots, `artifacts.zip` |
 
 The full acceptance table is written to `reports/acceptance_report.md` and `artifacts/data/acceptance.json`. Every number on the site is read from these exports, not typed by hand.
+
+---
+
+## Local Development
+
+**Prerequisites:** Python 3.10 for local notebook verification and Node.js 20.9+ for the website. The notebook is designed to run unchanged on free Google Colab.
+
+### Part A — Run the notebook
+
+**Google Colab (the intended environment)**
+
+1. Upload `tictactoe_cnn.ipynb` to [Google Colab](https://colab.research.google.com/).
+2. Choose **Runtime → Run all**.
+3. The notebook writes everything to `/content/artifacts/` and offers `artifacts.zip` for download.
+
+A full run is designed to take under 10 minutes on the free CPU runtime.
+
+**Local verification (optional)**
+
+```powershell
+powershell -ExecutionPolicy Bypass -File tools/setup_env.ps1
+.\.venv\Scripts\python.exe tools\build_notebook.py
+.\.venv\Scripts\python.exe tools\execute_notebook.py
+.\.venv\Scripts\python.exe tools\verify_acceptance.py --save-run reports\run1_metrics.json
+```
+
+Run the notebook a second time and compare to prove reproducibility:
+
+```powershell
+.\.venv\Scripts\python.exe tools\verify_acceptance.py --compare reports\run1_metrics.json
+```
+
+The executed notebook is committed with its outputs, so you can read the results without running anything.
+
+### Part B — Run the website
+
+```powershell
+cd web
+npm install
+npm run test
+npm run lint
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000). To check the production build:
+
+```powershell
+npm run build
+```
+
+### Artifacts and inference
+
+The site is fully static. It reads the JSON and weights the notebook exports from `web/public/artifacts/`. After a new notebook run, copy `artifacts/data`, `artifacts/models`, `artifacts/plots`, and `artifacts/artifacts.zip` into that folder.
+
+Inference is a hand-written JavaScript forward pass over the exported `weights.json` files. The notebook first attempts a TensorFlow.js conversion; when the installed converter cannot read the current Keras format, it writes `weights.json` and records the fallback in `artifacts/data/export_status.json`. This is stated on the About page rather than hidden. Twenty boards per model are checked against Python in `web/src/lib/engine/engine.test.ts`.
+
+---
+
+## Deployment
+
+The live site is deployed on Vercel at [https://tictaclearn-three.vercel.app](https://tictaclearn-three.vercel.app).
+
+**Vercel.** Import the repository, set the project root to `web/`, and use the configuration already in `web/vercel.json`:
+
+- install command: `npm install --legacy-peer-deps`
+- build command: `npm run build`
+- no environment variables or server functions
+
+The config also sets a one-hour cache with stale-while-revalidate for `/artifacts/*`, so model weights and plots are not re-downloaded on every visit.
+
+The site is a standard Next.js build. Any host that can run Next.js or serve the build output will work; no Python runtime is needed after the artifacts are copied into `web/public/artifacts/`.
