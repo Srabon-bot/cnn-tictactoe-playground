@@ -70,7 +70,7 @@ This is a **Part A notebook + Part B website** project from the University of In
 - Hand-written JavaScript forward pass over exported weights
 - Parity tests against twenty Python boards per model
 - Downloadable `.keras` models, portable weights, JSON data, plots, and the full archive
-- Responsive layout, keyboard-accessible controls, light and dark themes
+- Responsive layout, keyboard-accessible controls, and clear post-game feedback
 
 ---
 
@@ -81,7 +81,7 @@ This is a **Part A notebook + Part B website** project from the University of In
 | Notebook | ![Python](https://img.shields.io/badge/Python%203.10-3776AB?style=flat-square&logo=python&logoColor=white) ![Jupyter](https://img.shields.io/badge/Jupyter-F37626?style=flat-square&logo=jupyter&logoColor=white) Google Colab |
 | Modeling | ![TensorFlow](https://img.shields.io/badge/TensorFlow%202.21-FF6F00?style=flat-square&logo=tensorflow&logoColor=white) ![Keras](https://img.shields.io/badge/Keras-D00000?style=flat-square&logo=keras&logoColor=white) ![NumPy](https://img.shields.io/badge/NumPy-013243?style=flat-square&logo=numpy&logoColor=white) |
 | Evaluation | ![Matplotlib](https://img.shields.io/badge/Matplotlib-11557C?style=flat-square&logo=python&logoColor=white) memoized minimax, gameplay simulation |
-| Verification | ![pytest](https://img.shields.io/badge/Vitest-6E9F18?style=flat-square&logo=vitest&logoColor=white) nbclient, nbconvert, acceptance checks |
+| Verification | ![Vitest](https://img.shields.io/badge/Vitest-6E9F18?style=flat-square&logo=vitest&logoColor=white) nbclient, nbconvert, acceptance checks |
 | Framework | ![Next.js](https://img.shields.io/badge/Next.js%2016-000000?style=flat-square&logo=nextdotjs&logoColor=white) App Router |
 | UI library | ![React](https://img.shields.io/badge/React%2019-61DAFB?style=flat-square&logo=react&logoColor=black) |
 | Language | ![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white) |
@@ -257,3 +257,78 @@ The live site is deployed on Vercel at [https://tictaclearn-three.vercel.app](ht
 The config also sets a one-hour cache with stale-while-revalidate for `/artifacts/*`, so model weights and plots are not re-downloaded on every visit.
 
 The site is a standard Next.js build. Any host that can run Next.js or serve the build output will work; no Python runtime is needed after the artifacts are copied into `web/public/artifacts/`.
+
+---
+
+## Team
+
+| Name | Student ID | Batch / Section | Role |
+|---|---|---|---|
+| Md. Shahriar Hossain Srabon | 0432310005101056 | 53 / B1 | Dataset, training, artifact export |
+| Lubna Jahan Lipa | 0432310005101088 | 53 / B2 | Game logic, interface, level selection |
+| Tamanna Khokon | 0432310005101082 | 53 / B2 | Model integration, explanations, evaluation, report |
+
+Department of Computer Science and Engineering, University of Information Technology and Sciences (UITS).
+
+---
+
+## Limits
+
+Limits are part of the lesson, so they are written down:
+
+- **Generated data only.** The project does not use an external dataset; every board is enumerated from the game tree and labeled by minimax.
+- **The Steady model does not win against perfect play.** It draws all 200 evaluated games against minimax and never loses, but it does not force a win.
+- **Held-out accuracy is below 100%.** The Steady model scores 95.9% top-choice accuracy on the test split.
+- **The post-mask score is generous.** The engine discards occupied cells before choosing, so top-choice accuracy remains the primary number.
+- **TensorFlow.js conversion is a fallback.** The notebook exports portable `weights.json` and records the conversion status instead of hiding it.
+- **No accounts or stored scores.** The site keeps no profile, history, or leaderboard.
+- **Browser inference is a small forward pass.** It reproduces the exported CNN for this board and model shape; it is not a general TensorFlow runtime.
+
+---
+
+## Repository Map
+
+```text
+TicTacLearn/
+├── README.md
+├── PRD_TicTacToe_CNN_Notebook.md       # original project requirements
+├── requirements-notebook.txt           # pinned Python environment
+├── tictactoe_cnn.ipynb                 # Part A notebook, saved with outputs
+├── artifacts/
+│   ├── data/                           # metrics, histories, gameplay, parity vectors
+│   ├── models/                         # .keras models + portable weights.json
+│   ├── plots/                          # seven exported figures
+│   └── artifacts.zip                   # downloadable archive
+├── tools/                              # build, execute, and acceptance scripts
+├── reports/                            # run metrics and acceptance report
+├── docs/screenshots/                   # README captures
+└── web/                                # Part B Next.js site
+    ├── src/app/                        # Home, Play, Learn, Compare, Teacher, About
+    ├── src/components/                 # board, reports, charts, navigation
+    ├── src/lib/engine/                 # rules, inference, analysis, parity tests
+    └── public/artifacts/               # notebook exports served to the browser
+```
+
+---
+
+## Documentation
+
+| Document | What it covers |
+|---|---|
+| [`PRD_TicTacToe_CNN_Notebook.md`](PRD_TicTacToe_CNN_Notebook.md) | The original notebook and website requirements |
+| [`web/README.md`](web/README.md) | Site-specific setup, artifacts, inference, and deployment notes |
+| [`reports/acceptance_report.md`](reports/acceptance_report.md) | The generated acceptance table |
+| [`artifacts/data/acceptance.json`](artifacts/data/acceptance.json) | The same acceptance report as machine-readable data |
+| [`artifacts/artifacts.zip`](artifacts/artifacts.zip) | The full run: models, weights, JSON, plots, and notebook outputs |
+
+---
+
+## Credits
+
+Built by **Md. Shahriar Hossain Srabon**, **Lubna Jahan Lipa**, and **Tamanna Khokon** for the Department of Computer Science and Engineering at the **University of Information Technology and Sciences (UITS)**.
+
+<div align="center">
+
+<sub>Notebook in Python · Site in Next.js · Three models, one board</sub>
+
+</div>
