@@ -104,3 +104,85 @@ This is a **Part A notebook + Part B website** project from the University of In
 | `/about` | The team, the notebook-to-browser pipeline, and what the site does not claim |
 
 The site is fully static. There is no login, database, server runtime, or saved score.
+
+---
+
+## The Three Opponents
+
+| Level | Internal model | What it demonstrates |
+|---|---|---|
+| **Beginner** | `underfit` | A model that learned too little: close to random, misses wins and blocks |
+| **Memorizer** | `overfit` | A model that memorized its practice boards: perfect on those, poor on new ones |
+| **Steady** | `stable` | A model that learned the patterns: averages over the board's symmetries and never loses an evaluated game |
+
+The three models share the same input and output shape, but differ in capacity, training set, and regularization. That is the whole experiment: same task, same labels, deliberately different learning outcomes.
+
+---
+
+## How It Works
+
+```text
+Reachable boards
+      │  memoized minimax
+      ▼
+Optimal-move labels
+      │  group by 8 symmetries
+      ▼
+70 / 15 / 15 group-disjoint split
+      │  encode from mover's view
+      ▼
+Three CNNs
+      │  train + evaluate
+      ▼
+Artifacts
+      │  export + copy
+      ▼
+Static Next.js site  ──►  Browser forward pass
+```
+
+1. **Generate the data.** Every non-terminal board reachable from the empty board is enumerated; none of it is imported from an external dataset.
+2. **Label with minimax.** A memoized minimax returns the set of optimal moves for each position, stored as a soft target over those moves.
+3. **Prevent symmetry leakage.** Boards are grouped by their canonical form across eight rotations and mirrors, then split 70% / 15% / 15% by group. A rotated training board never appears in validation or test.
+4. **Encode from the mover.** The 3×3 board is always read from the perspective of the player whose turn it is: own marks `+1`, opponent `-1`, empty `0`.
+5. **Train three CNNs.** The Beginner has two filters and a few epochs; the Memorizer is trained on sixty boards until it knows them perfectly; the Steady model uses the full set, augmentation, dropout, and early stopping.
+6. **Export and serve.** The notebook writes models, weights, JSON histories, metrics, plots, and a zip. The website runs a hand-written JavaScript forward pass over `weights.json`; no Python server is involved.
+
+### Why the split matters
+
+Tic-tac-toe boards have eight symmetries. A random row split would put rotations of the same board in both training and test, making a memorizing model look better than it is. Grouping by canonical form makes the held-out score an honest test of generalization across genuinely unseen shapes.
+
+---
+
+## Results
+
+All metrics are generated deterministically from seed `42` across **4,520 reachable non-terminal positions**, grouped into **627 canonical forms** and split 70% / 15% / 15% by group.
+
+Accuracy is reported two ways. **Top choice** is the primary score: the cell the network ranks first must be empty and minimax-optimal. **After mask** discards occupied cells before choosing, which is how the game engine actually plays. The post-mask number is generous — "always take the first empty cell" already scores about 59% on these labels — so both are always shown together.
+
+| Model | Parameters | Train top choice | Validation top choice | Test top choice | Test after mask |
+|---|---:|---:|---:|---:|---:|
+| `underfit` | 191 | 20.5% | 17.4% | 19.9% | 55.6% |
+| `overfit` | 687,625 | 100.0% | 53.7% | 58.7% | 74.6% |
+| `stable` | 93,833 | 100.0% | 98.4% | **95.9%** | 95.9% |
+
+### Gameplay Evaluation
+
+Each model plays **1,200 games**: 1,000 against random play and 200 against minimax. The Steady model averages its answer over all eight rotations and mirrors, then takes an immediate win or the single forced block when one exists.
+
+| Model | vs random (1,000 games) | vs minimax (200 games) | Missed win | Missed block | Illegal first choice |
+|---|---|---|---|---|---|
+| `underfit` | 500W / 108D / 392L | 0W / 1D / 199L | 62.5% | 88.1% | 47.8% |
+| `overfit` | 707W / 104D / 189L | 0W / 52D / 148L | 33.7% | 67.2% | 20.8% |
+| `stable` | **944W / 56D / 0L** | **0W / 200D / 0L** | **0.0%** | **0.0%** | **0.0%** |
+
+### Acceptance and Reproducibility
+
+| Measure | Value |
+|---|---|
+| Acceptance checks | 12 / 12 passed |
+| Notebook runtime | 2.4 minutes |
+| Reproducibility | Two back-to-back runs match within `1e-9` |
+| Parity checks | 20 boards per model, Python vs JavaScript |
+| Exported artifacts | 3 `.keras` models, 3 `weights.json`, JSON metrics, 7 plots, `artifacts.zip` |
+
+The full acceptance table is written to `reports/acceptance_report.md` and `artifacts/data/acceptance.json`. Every number on the site is read from these exports, not typed by hand.
