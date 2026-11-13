@@ -1,0 +1,15 @@
+# Reconstructed from .venv on Windows (Python 3.10.11)
+# This project had no requirements.txt — created during the Kubuntu migration scan.
+# NOTE: TensorFlow CPU 2.21.0 was installed from a local wheel; on Linux just pip-install it.
+tensorflow-cpu==2.21.0
+tensorflowjs==4.22.0
+keras==3.12.4
+numpy==2.2.6
+matplotlib==3.10.9
+jupyter==1.1.1
+ipykernel==7.3.0
+notebook==7.4.7
+h5py==3.14.0
+pillow==12.3.0
+requests==2.34.2
+beautifulsoup4==4.15.0
